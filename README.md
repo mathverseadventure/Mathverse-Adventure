@@ -1,11 +1,32 @@
 
-  # Interfaz divertida de matemáticas
+  # Mathverse Adventure
+# Mathverse Adventure
 
-  This is a code bundle for Interfaz divertida de matemáticas. The original project is available at https://www.figma.com/design/oj7rQuqbUkn4nNyhhfLqV8/Interfaz-divertida-de-matem%C3%A1ticas.
+Mathverse Adventure es un aplicativo web educativo y  gamificado para estudiantes de grado quinto de primaria del colegio Divino Salvador que fortalece el aprendizaje de las matemáticas mediante aventuras, retos y recompensas.
 
-  ## Running the code
+## Tecnologías utilizadas
 
-  Run `npm i` to install the dependencies.
+* React + TypeScript
+* Vite
+* Tailwind CSS
+* Laravel 12
+* MySQL
+* Motion (Framer Motion)
+* Lucide React
+* Git Hub
 
-  Run `npm run dev` to start the development server.
+## Funcionalidades del MVP
+
+* Registro e inicio de sesión de estudiantes.
+* Registro de docentes.
+* Prueba diagnóstica inicial.
+* Dashboard del estudiante.
+* Sistema de progreso por lecciones.
+* Puntos META y corazones.
+* Tienda de accesorios para Draco.
+* Chatbot educativo Draco.
+* Ranking y gestión de clases.
+
+##
+
   
