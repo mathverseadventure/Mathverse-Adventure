@@ -352,7 +352,7 @@ const { register, setLoggedStudent } = useUser();
               type="submit"
               className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white font-black text-lg shadow-lg hover:shadow-xl transition-shadow"
             >
-              {isLogin ? '¡Entrar a la Aventura!' : '¡Crear Cuenta!'}
+              {isLogin ? '¡Entrar a la Aventura!' : '¡Crea una Cuenta en Mathverse Adventure!'}
             </motion.button>
 
           </form>

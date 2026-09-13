@@ -31,7 +31,7 @@ interface UserContextType {
   user: User | null;
   userProgress: UserProgress;
 
-  // Nuevo: guardar estudiante que viene desde Laravel
+  // Estudiante que inicia sesión desde Laravel
   setLoggedStudent: (estudiante: any) => void;
 
   login: (
@@ -75,11 +75,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     const savedUser = localStorage.getItem("mathverse_user");
 
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-
-    if (savedUser) {
       const parsedUser = JSON.parse(savedUser);
+
+      setUser(parsedUser);
 
       const progress = JSON.parse(
         localStorage.getItem(`mathverse_progress_${parsedUser.id}`) || "{}"
@@ -89,7 +87,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // LOGIN DOCENTE (localStorage)
   const login = async (
     email: string,
     password: string,
@@ -106,15 +103,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
 
     if (!foundUser) return false;
 
-    const today = new Date().toDateString();
+    const updatedUser = {
+      ...foundUser,
+      lastLoginDate: new Date().toDateString(),
+    };
 
-    foundUser.lastLoginDate = today;
+    setUser(updatedUser);
 
-    setUser(foundUser);
-    localStorage.setItem("mathverse_user", JSON.stringify(foundUser));
+    localStorage.setItem("mathverse_user", JSON.stringify(updatedUser));
 
     const progress = JSON.parse(
-      localStorage.getItem(`mathverse_progress_${foundUser.id}`) || "{}"
+      localStorage.getItem(`mathverse_progress_${updatedUser.id}`) || "{}"
     );
 
     setUserProgress(progress);
@@ -122,7 +121,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     return true;
   };
 
-  // NUEVO: guardar estudiante de Laravel
   const setLoggedStudent = (estudiante: any) => {
     const studentUser: User = {
       id: estudiante.id.toString(),
@@ -136,6 +134,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       streakDays: 1,
       dracoOutfits: ["default"],
       equippedOutfit: "default",
+      classCode: undefined,
     };
 
     setUser(studentUser);
@@ -150,7 +149,6 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUserProgress(progress);
   };
 
-  // REGISTRO DOCENTE
   const register = async (
     name: string,
     email: string,
