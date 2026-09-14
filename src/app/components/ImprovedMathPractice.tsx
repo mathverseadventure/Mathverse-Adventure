@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Heart, Trophy, ArrowLeft, Sparkles, Coins, X } from 'lucide-react';
-import dragonCharacter from 'figma:asset/a7a237254f335b0739e1c16c0d3ef0796ab00ae9.png';
+import dragonCharacter from "../../assets/draco.png";
 import { useUser } from '../utils/userContext';
 
 interface MathProblem {
@@ -148,23 +148,29 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
 
     if (correct) {
       const earnedPoints = 10 + streak * 2;
-      setMetaPoints(metaPoints + earnedPoints);
-      setStreak(streak + 1);
+
+      // Monedas de esta partida
+      setMetaPoints((prev) => prev + earnedPoints);
+
+     // Monedas permanentes del estudiante (Dashboard)
+      updateMetaPoints(earnedPoints);
+
+      setStreak((prev) => prev + 1);
       setShowConfetti(true);
       
       const messages = [
-        '¡Excelente! 🎉',
-        '¡Perfecto! ⭐',
-        '¡Increíble! 🚀',
-        '¡Genial! 💪',
-        '¡Fantástico! 🌟'
+        '¡Excelente! ',
+        '¡Perfecto! ',
+        '¡Increíble! ',
+        '¡Genial! ',
+        '¡Fantástico! '
       ];
       setDragonMessage(messages[Math.floor(Math.random() * messages.length)]);
     } else {
       setStreak(0);
       setErrors(errors + 1);
       setHearts(hearts - 1);
-      setDragonMessage('¡Intenta de nuevo! 💪');
+      setDragonMessage('¡Intenta de nuevo! ');
     }
 
     setQuestionsAnswered(questionsAnswered + 1);
@@ -193,9 +199,15 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
     else if (accuracy >= 70) stars = 2;
     else if (accuracy >= 50) stars = 1;
 
-    updateMetaPoints(metaPoints);
-    updateHearts(hearts - (isCorrect === false ? 1 : 0));
-    updateProgress(category, lessonId, stars, errors + (isCorrect === false ? 1 : 0));
+    // Las monedas ya fueron guardadas en cada respuesta correcta.
+    updateHearts(hearts);
+
+    updateProgress(
+      category,
+      lessonId,
+      stars,
+      errors + (isCorrect === false ? 1 : 0)
+    );
     
     setShowResults(true);
   };
@@ -260,7 +272,7 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
             {incorrectAttempts.length > 0 && (
               <div className="mb-6">
                 <h2 className="text-2xl font-black text-gray-800 mb-4 flex items-center gap-2">
-                  📚 Retroalimentación - Repasemos tus errores
+                   Retroalimentación - Repasemos tus errores
                 </h2>
                 <div className="space-y-4">
                   {incorrectAttempts.map((attempt, index) => (
@@ -305,7 +317,7 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
             {incorrectAttempts.length === 0 && (
               <div className="bg-gradient-to-r from-green-100 to-emerald-100 p-6 rounded-2xl mb-6 text-center border-2 border-green-400">
                 <p className="text-2xl font-black text-green-700">
-                  🎉 ¡Perfecto! ¡No tuviste ningún error!
+                   ¡Perfecto! ¡No tuviste ningún error!
                 </p>
               </div>
             )}
