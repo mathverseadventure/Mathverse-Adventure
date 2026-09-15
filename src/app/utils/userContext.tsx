@@ -6,6 +6,8 @@ interface User {
   email: string;
   type: "student" | "teacher";
   school: string;
+  apellido?: string;
+  curso?: string;
   metaPoints: number;
   hearts: number;
   lastLoginDate: string;
@@ -45,7 +47,9 @@ interface UserContextType {
     email: string,
     password: string,
     type: "student" | "teacher",
-    school: string
+    school: string,
+    apellido?: string,
+    curso?: string
   ) => Promise<boolean>;
 
   logout: () => void;
@@ -154,7 +158,9 @@ export function UserProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     type: "student" | "teacher",
-    school: string
+    school: string,
+    apellido?: string,
+    curso?: string
   ): Promise<boolean> => {
     const users = JSON.parse(localStorage.getItem("mathverse_users") || "[]");
 
@@ -169,6 +175,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       password,
       type,
       school,
+      apellido,
+      curso,
       metaPoints: 0,
       hearts: 20,
       lastLoginDate: new Date().toDateString(),
