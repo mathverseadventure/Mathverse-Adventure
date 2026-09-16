@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Users, Plus, Zap, TrendingUp, AlertCircle, FileText, Trophy, LogOut, Search } from 'lucide-react';
+import { Users, Plus, Zap, TrendingUp, AlertCircle, FileText, Trophy, LogOut, Search, Lightbulb, BookOpen, Target } from 'lucide-react';
 import { useUser } from '../utils/userContext';
-import dragonCharacter from 'figma:asset/a7a237254f335b0739e1c16c0d3ef0796ab00ae9.png';
+import dragonCharacter from '../../assets/draco.png';
 
 interface Student {
   id: string;
@@ -110,20 +110,20 @@ export function TeacherDashboard() {
   const generateFeedback = (student: Student) => {
     const studentProgress = getStudentProgress(student.id);
     
-    let feedback = `📊 Reporte de ${student.name}\n\n`;
-    feedback += `✅ Lecciones completadas: ${studentProgress.totalCompleted}\n`;
-    feedback += `💰 MetaPoints: ${student.metaPoints}\n`;
-    feedback += `🔥 Racha: ${student.streakDays} días\n\n`;
+    let feedback = `Reporte de ${student.name}\n\n`;
+    feedback += `Lecciones completadas: ${studentProgress.totalCompleted}\n`;
+    feedback += `MetaPoints: ${student.metaPoints}\n`;
+    feedback += `Racha: ${student.streakDays} días\n\n`;
     
     if (studentProgress.weakCategories.length > 0) {
-      feedback += `⚠️ Áreas que necesitan refuerzo:\n`;
+      feedback += `Áreas que necesitan refuerzo:\n`;
       studentProgress.weakCategories.forEach(cat => {
         feedback += `  • ${cat}\n`;
       });
       feedback += `\n`;
     }
     
-    feedback += `💡 Recomendaciones:\n`;
+    feedback += `Recomendaciones:\n`;
     if (studentProgress.totalErrors > 10) {
       feedback += `  • Revisar conceptos básicos\n`;
       feedback += `  • Practicar más ejercicios de repaso\n`;
@@ -470,19 +470,19 @@ export function TeacherDashboard() {
                   <h3 className="text-xl font-bold text-gray-800 mb-4">Recomendaciones</h3>
                   <ul className="space-y-3">
                     <li className="flex items-start gap-3">
-                      <span className="text-2xl">💡</span>
+                      <Lightbulb className="w-6 h-6 text-yellow-500 flex-shrink-0" />
                       <span className="text-gray-700 font-semibold">
                         Crear MetaEventos tipo Kahoot para aumentar la participación
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="text-2xl">📚</span>
+                      <BookOpen className="w-6 h-6 text-indigo-500 flex-shrink-0" />
                       <span className="text-gray-700 font-semibold">
                         Revisar estudiantes con más de 10 errores para brindar apoyo personalizado
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
-                      <span className="text-2xl">🎯</span>
+                      <Target className="w-6 h-6 text-pink-500 flex-shrink-0" />
                       <span className="text-gray-700 font-semibold">
                         Motivar a estudiantes con racha baja a mantener práctica diaria
                       </span>

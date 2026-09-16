@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { X, Users, Plus, Trophy, Target, Copy } from 'lucide-react';
+import { X, Users, Plus, Trophy, Target, Copy, Medal } from 'lucide-react';
 import { useUser } from '../utils/userContext';
 
 interface ClassManagementProps {
@@ -267,7 +267,6 @@ export function ClassManagement({ isOpen, onClose }: ClassManagementProps) {
                   <div className="space-y-3">
                     {rankings.map((student, index) => {
                       const isCurrentUser = student.name === user.name;
-                      const medalEmojis = ['🥇', '🥈', '🥉'];
                       
                       return (
                         <motion.div
@@ -289,7 +288,7 @@ export function ClassManagement({ isOpen, onClose }: ClassManagementProps) {
                                 ? 'bg-gradient-to-br from-yellow-400 to-orange-500 text-white'
                                 : 'bg-gray-300 text-gray-700'
                             }`}>
-                              {index < 3 ? medalEmojis[index] : index + 1}
+                              {index < 3 ? <Medal className="w-6 h-6 text-white" /> : index + 1}
                             </div>
                             <div className="flex-1">
                               <p className={`font-black text-lg ${isCurrentUser ? 'text-orange-700' : 'text-gray-800'}`}>

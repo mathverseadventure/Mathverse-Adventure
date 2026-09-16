@@ -7,7 +7,7 @@ import dragonCharacter from "../../assets/draco.png";
 
 import { useUser } from '../utils/userContext';
 import { iniciarSesion, registrarEstudiante } from '../../services/estudianteService';
-import { registrarDocente } from '../../services/docenteService';
+import { registrarDocente, iniciarSesionDocente } from '../../services/docenteService';
 
 export function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -23,7 +23,7 @@ export function Login() {
   const [grado, setGrado] = useState('');
   const [error, setError] = useState('');
 
-  const { register, setLoggedStudent } = useUser();
+  const { register, setLoggedStudent, setLoggedTeacher, login } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,13 +33,23 @@ export function Login() {
       if (isLogin) {
         if (userType === 'student') {
           const estudiante = await iniciarSesion(email, password);
-          setLoggedStudent(estudiante);
+          await setLoggedStudent(estudiante);
           alert(`¡Bienvenido ${estudiante.nombre}!`);
           return;
         }
 
-        setError('El inicio de sesión de docentes lo conectaremos más adelante.');
-        return;
+        try {
+          const docente = await iniciarSesionDocente(email, password);
+          setLoggedTeacher(docente);
+          return;
+        } catch {
+          const ok = await login(email, password, 'teacher');
+          if (!ok) {
+            setError('Correo o contraseña de docente incorrectos.');
+            return;
+          }
+          return;
+        }
       }
 
       // REGISTRO
@@ -85,7 +95,6 @@ export function Login() {
           curso,
         });
 
-        // También guardar en contexto local para el panel (hasta habilitar login completo)
         await register(
           `${name.trim()} ${apellido.trim()}`,
           email.trim(),
@@ -96,7 +105,7 @@ export function Login() {
           curso
         );
 
-        alert('Docente registrado correctamente.');
+        alert('Docente registrado correctamente. Ya puedes iniciar sesión.');
       }
 
       setName('');

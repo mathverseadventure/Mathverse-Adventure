@@ -1,7 +1,7 @@
 import { motion } from 'motion/react';
-import { X, User, School, Mail, LogOut, Coins, Flame, Heart, Trophy } from 'lucide-react';
+import { X, User, School, Mail, LogOut, Coins, Flame, Heart, Trophy, GraduationCap } from 'lucide-react';
 import { useUser } from '../utils/userContext';
-import dragonCharacter from 'figma:asset/a7a237254f335b0739e1c16c0d3ef0796ab00ae9.png';
+import dragonCharacter from '../../assets/draco.png';
 
 interface UserProfileProps {
   isOpen: boolean;
@@ -55,8 +55,18 @@ export function UserProfile({ isOpen, onClose }: UserProfileProps) {
             </div>
             <div>
               <h2 className="text-3xl font-black text-white">{user.name}</h2>
-              <p className="text-white/90 font-semibold capitalize">
-                {user.type === 'student' ? '🎓 Estudiante' : '👨‍🏫 Docente'}
+              <p className="text-white/90 font-semibold capitalize flex items-center gap-2">
+                {user.type === 'student' ? (
+                  <>
+                    <GraduationCap className="w-5 h-5" />
+                    Estudiante
+                  </>
+                ) : (
+                  <>
+                    <School className="w-5 h-5" />
+                    Docente
+                  </>
+                )}
               </p>
             </div>
           </div>
