@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { X, TrendingUp, Calendar, Target, Award, BarChart3 } from 'lucide-react';
+import { X, TrendingUp, Calendar, Target, Award, BarChart3, Lightbulb, Check } from 'lucide-react';
 import { useUser } from '../utils/userContext';
 
 interface StatsProps {
@@ -162,14 +162,18 @@ export function Stats({ isOpen, onClose }: StatsProps) {
 
           {/* Info for Parents */}
           <div className="bg-blue-50 p-6 rounded-2xl border-2 border-blue-300">
-            <h3 className="text-xl font-black text-blue-800 mb-3">📊 Información para Padres</h3>
+            <h3 className="text-xl font-black text-blue-800 mb-3 flex items-center gap-2">
+              <BarChart3 className="w-6 h-6" />
+              Información para Padres
+            </h3>
             <ul className="space-y-2 text-gray-700 font-semibold">
-              <li>✓ Total de MetaPoints: <strong className="text-blue-600">{user.metaPoints}</strong></li>
-              <li>✓ Días de práctica consecutivos: <strong className="text-blue-600">{user.streakDays}</strong></li>
-              <li>✓ Corazones disponibles: <strong className="text-blue-600">{user.hearts}/5</strong></li>
-              <li>✓ Precisión promedio: <strong className="text-blue-600">{avgAccuracy}%</strong></li>
-              <li className="text-sm text-gray-600 mt-4 pt-4 border-t border-blue-200">
-                💡 Los corazones limitan el tiempo de práctica para evitar el exceso de uso de pantallas.
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-600" /> Total de MetaPoints: <strong className="text-blue-600">{user.metaPoints}</strong></li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-600" /> Días de práctica consecutivos: <strong className="text-blue-600">{user.streakDays}</strong></li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-600" /> Corazones disponibles: <strong className="text-blue-600">{user.hearts}/5</strong></li>
+              <li className="flex items-center gap-2"><Check className="w-4 h-4 text-green-600" /> Precisión promedio: <strong className="text-blue-600">{avgAccuracy}%</strong></li>
+              <li className="text-sm text-gray-600 mt-4 pt-4 border-t border-blue-200 flex items-start gap-2">
+                <Lightbulb className="w-4 h-4 text-yellow-500 flex-shrink-0 mt-0.5" />
+                Los corazones limitan el tiempo de práctica para evitar el exceso de uso de pantallas.
               </li>
             </ul>
           </div>

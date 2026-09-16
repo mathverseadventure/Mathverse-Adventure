@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, Heart, Trophy, ArrowLeft, Sparkles } from 'lucide-react';
-import dragonCharacter from 'figma:asset/a7a237254f335b0739e1c16c0d3ef0796ab00ae9.png';
+import dragonCharacter from '../../assets/draco.png';
 
 interface MathProblem {
   question: string;
@@ -112,16 +112,16 @@ export function MathPractice({ category, onBack, onPointsEarned }: MathPracticeP
       onPointsEarned(earnedPoints);
       
       const messages = [
-        '¡Excelente! 🎉',
-        '¡Perfecto! ⭐',
-        '¡Increíble! 🚀',
-        '¡Genial! 💪',
-        '¡Fantástico! 🌟'
+        '¡Excelente!',
+        '¡Perfecto!',
+        '¡Increíble!',
+        '¡Genial!',
+        '¡Fantástico!'
       ];
       setDragonMessage(messages[Math.floor(Math.random() * messages.length)]);
     } else {
       setStreak(0);
-      setDragonMessage('¡Intenta de nuevo! 💪');
+      setDragonMessage('¡Intenta de nuevo!');
     }
 
     setQuestionsAnswered(questionsAnswered + 1);

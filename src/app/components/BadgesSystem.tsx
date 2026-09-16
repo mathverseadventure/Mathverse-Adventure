@@ -1,5 +1,35 @@
 import { motion } from 'motion/react';
-import { X, Trophy, Crown, Zap, Star, Target, Flame, Award, CheckCircle } from 'lucide-react';
+import {
+  X,
+  Trophy,
+  Crown,
+  Zap,
+  Star,
+  Target,
+  Flame,
+  Award,
+  CheckCircle,
+  BookOpen,
+  GraduationCap,
+  Map,
+  Dumbbell,
+  Coins,
+  Gem,
+  Smile,
+  Briefcase,
+  Sparkles,
+  Plus,
+  Minus,
+  X as Multiply,
+  Divide,
+  Shirt,
+  Users,
+  HandHelping,
+  Sunrise,
+  Moon,
+  Swords,
+  type LucideIcon,
+} from 'lucide-react';
 import { useUser } from '../utils/userContext';
 
 interface BadgesSystemProps {
@@ -11,7 +41,8 @@ interface Badge {
   id: string;
   name: string;
   description: string;
-  emoji: string;
+  icon: LucideIcon;
+  iconColor: string;
   requirement: string;
   metaPointsReward: number;
   category: 'lessons' | 'streak' | 'points' | 'mastery' | 'special';
@@ -20,45 +51,45 @@ interface Badge {
 
 const allBadges: Badge[] = [
   // Lessons Badges
-  { id: 'first_lesson', name: 'Primer Paso', description: 'Completa tu primera lección', emoji: '🎯', requirement: '1 lección', metaPointsReward: 50, category: 'lessons' },
-  { id: 'five_lessons', name: 'Aprendiz', description: 'Completa 5 lecciones', emoji: '📚', requirement: '5 lecciones', metaPointsReward: 100, category: 'lessons' },
-  { id: 'ten_lessons', name: 'Estudiante Dedicado', description: 'Completa 10 lecciones', emoji: '🎓', requirement: '10 lecciones', metaPointsReward: 200, category: 'lessons' },
-  { id: 'twenty_lessons', name: 'Explorador Matemático', description: 'Completa 20 lecciones', emoji: '🗺️', requirement: '20 lecciones', metaPointsReward: 400, category: 'lessons' },
-  { id: 'all_lessons', name: 'Maestro Completo', description: 'Completa todas las lecciones', emoji: '👑', requirement: '35 lecciones', metaPointsReward: 1000, category: 'lessons' },
+  { id: 'first_lesson', name: 'Primer Paso', description: 'Completa tu primera lección', icon: Target, iconColor: 'text-blue-500', requirement: '1 lección', metaPointsReward: 50, category: 'lessons' },
+  { id: 'five_lessons', name: 'Aprendiz', description: 'Completa 5 lecciones', icon: BookOpen, iconColor: 'text-indigo-500', requirement: '5 lecciones', metaPointsReward: 100, category: 'lessons' },
+  { id: 'ten_lessons', name: 'Estudiante Dedicado', description: 'Completa 10 lecciones', icon: GraduationCap, iconColor: 'text-purple-500', requirement: '10 lecciones', metaPointsReward: 200, category: 'lessons' },
+  { id: 'twenty_lessons', name: 'Explorador Matemático', description: 'Completa 20 lecciones', icon: Map, iconColor: 'text-teal-500', requirement: '20 lecciones', metaPointsReward: 400, category: 'lessons' },
+  { id: 'all_lessons', name: 'Maestro Completo', description: 'Completa todas las lecciones', icon: Crown, iconColor: 'text-yellow-500', requirement: '35 lecciones', metaPointsReward: 1000, category: 'lessons' },
 
   // Streak Badges
-  { id: 'streak_3', name: 'Constante', description: 'Mantén una racha de 3 días', emoji: '🔥', requirement: '3 días', metaPointsReward: 75, category: 'streak' },
-  { id: 'streak_7', name: 'Semana Perfecta', description: 'Mantén una racha de 7 días', emoji: '⭐', requirement: '7 días', metaPointsReward: 150, category: 'streak' },
-  { id: 'streak_15', name: 'Incansable', description: 'Mantén una racha de 15 días', emoji: '💪', requirement: '15 días', metaPointsReward: 300, category: 'streak' },
-  { id: 'streak_30', name: 'Leyenda del Fuego', description: 'Mantén una racha de 30 días', emoji: '🌟', requirement: '30 días', metaPointsReward: 500, category: 'streak' },
-  { id: 'streak_100', name: 'Fenómeno Imparable', description: 'Mantén una racha de 100 días', emoji: '🏆', requirement: '100 días', metaPointsReward: 2000, category: 'streak' },
+  { id: 'streak_3', name: 'Constante', description: 'Mantén una racha de 3 días', icon: Flame, iconColor: 'text-orange-500', requirement: '3 días', metaPointsReward: 75, category: 'streak' },
+  { id: 'streak_7', name: 'Semana Perfecta', description: 'Mantén una racha de 7 días', icon: Star, iconColor: 'text-yellow-500', requirement: '7 días', metaPointsReward: 150, category: 'streak' },
+  { id: 'streak_15', name: 'Incansable', description: 'Mantén una racha de 15 días', icon: Dumbbell, iconColor: 'text-red-500', requirement: '15 días', metaPointsReward: 300, category: 'streak' },
+  { id: 'streak_30', name: 'Leyenda del Fuego', description: 'Mantén una racha de 30 días', icon: Sparkles, iconColor: 'text-orange-600', requirement: '30 días', metaPointsReward: 500, category: 'streak' },
+  { id: 'streak_100', name: 'Fenómeno Imparable', description: 'Mantén una racha de 100 días', icon: Trophy, iconColor: 'text-amber-500', requirement: '100 días', metaPointsReward: 2000, category: 'streak' },
 
   // Points Badges
-  { id: 'points_100', name: 'Coleccionista', description: 'Acumula 100 MetaPoints', emoji: '💰', requirement: '100 MP', metaPointsReward: 50, category: 'points' },
-  { id: 'points_500', name: 'Acumulador', description: 'Acumula 500 MetaPoints', emoji: '💎', requirement: '500 MP', metaPointsReward: 100, category: 'points' },
-  { id: 'points_1000', name: 'Millonario Junior', description: 'Acumula 1000 MetaPoints', emoji: '🤑', requirement: '1000 MP', metaPointsReward: 250, category: 'points' },
-  { id: 'points_5000', name: 'Magnate Matemático', description: 'Acumula 5000 MetaPoints', emoji: '👔', requirement: '5000 MP', metaPointsReward: 500, category: 'points' },
+  { id: 'points_100', name: 'Coleccionista', description: 'Acumula 100 MetaPoints', icon: Coins, iconColor: 'text-yellow-600', requirement: '100 MP', metaPointsReward: 50, category: 'points' },
+  { id: 'points_500', name: 'Acumulador', description: 'Acumula 500 MetaPoints', icon: Gem, iconColor: 'text-cyan-500', requirement: '500 MP', metaPointsReward: 100, category: 'points' },
+  { id: 'points_1000', name: 'Millonario Junior', description: 'Acumula 1000 MetaPoints', icon: Smile, iconColor: 'text-green-500', requirement: '1000 MP', metaPointsReward: 250, category: 'points' },
+  { id: 'points_5000', name: 'Magnate Matemático', description: 'Acumula 5000 MetaPoints', icon: Briefcase, iconColor: 'text-slate-600', requirement: '5000 MP', metaPointsReward: 500, category: 'points' },
 
   // Mastery Badges
-  { id: 'perfect_lesson', name: 'Perfeccionista', description: 'Completa una lección sin errores', emoji: '✨', requirement: '0 errores', metaPointsReward: 100, category: 'mastery' },
-  { id: 'perfect_category', name: 'Maestro de Categoría', description: 'Completa todas las lecciones de una categoría con 3 estrellas', emoji: '🌟', requirement: 'Categoría perfecta', metaPointsReward: 300, category: 'mastery' },
-  { id: 'speed_demon', name: 'Rayo Matemático', description: 'Responde 10 preguntas correctas en menos de 1 minuto', emoji: '⚡', requirement: '10 preguntas rápidas', metaPointsReward: 200, category: 'mastery' },
-  { id: 'combo_master', name: 'Combo Maestro', description: 'Responde 15 preguntas correctas seguidas', emoji: '🎯', requirement: '15 combo', metaPointsReward: 350, category: 'mastery' },
+  { id: 'perfect_lesson', name: 'Perfeccionista', description: 'Completa una lección sin errores', icon: Sparkles, iconColor: 'text-pink-500', requirement: '0 errores', metaPointsReward: 100, category: 'mastery' },
+  { id: 'perfect_category', name: 'Maestro de Categoría', description: 'Completa todas las lecciones de una categoría con 3 estrellas', icon: Star, iconColor: 'text-yellow-500', requirement: 'Categoría perfecta', metaPointsReward: 300, category: 'mastery' },
+  { id: 'speed_demon', name: 'Rayo Matemático', description: 'Responde 10 preguntas correctas en menos de 1 minuto', icon: Zap, iconColor: 'text-purple-500', requirement: '10 preguntas rápidas', metaPointsReward: 200, category: 'mastery' },
+  { id: 'combo_master', name: 'Combo Maestro', description: 'Responde 15 preguntas correctas seguidas', icon: Target, iconColor: 'text-red-500', requirement: '15 combo', metaPointsReward: 350, category: 'mastery' },
 
   // Special Badges
-  { id: 'suma_king', name: 'Rey de la Suma', description: 'Domina todas las lecciones de suma', emoji: '➕', requirement: 'Suma completa', metaPointsReward: 250, category: 'special' },
-  { id: 'resta_king', name: 'Rey de la Resta', description: 'Domina todas las lecciones de resta', emoji: '➖', requirement: 'Resta completa', metaPointsReward: 250, category: 'special' },
-  { id: 'multi_king', name: 'Rey de la Multiplicación', description: 'Domina todas las lecciones de multiplicación', emoji: '✖️', requirement: 'Multiplicación completa', metaPointsReward: 250, category: 'special' },
-  { id: 'division_king', name: 'Rey de la División', description: 'Domina todas las lecciones de división', emoji: '➗', requirement: 'División completa', metaPointsReward: 250, category: 'special' },
-  { id: 'math_king', name: 'REY DE LAS MATEMÁTICAS', description: '¡Has dominado TODAS las operaciones!', emoji: '👑', requirement: 'Todo completo', metaPointsReward: 2000, category: 'special' },
-  { id: 'draco_friend', name: 'Amigo de Draco', description: 'Usa el chat con Draco 10 veces', emoji: '🐉', requirement: '10 conversaciones', metaPointsReward: 150, category: 'special' },
-  { id: 'shopping_expert', name: 'Fashionista Matemático', description: 'Desbloquea 5 outfits para Draco', emoji: '👕', requirement: '5 outfits', metaPointsReward: 200, category: 'special' },
-  { id: 'social_butterfly', name: 'Mariposa Social', description: 'Únete a una clase', emoji: '🦋', requirement: 'Unirse a clase', metaPointsReward: 100, category: 'special' },
-  { id: 'top_student', name: 'Estudiante Estrella', description: 'Llega al Top 3 de tu clase', emoji: '🌟', requirement: 'Top 3', metaPointsReward: 300, category: 'special' },
-  { id: 'helper', name: 'Ayudante', description: 'Ayuda a otro estudiante', emoji: '🤝', requirement: 'Ayudar', metaPointsReward: 150, category: 'special' },
-  { id: 'early_bird', name: 'Madrugador', description: 'Practica antes de las 8 AM', emoji: '🌅', requirement: 'Práctica temprana', metaPointsReward: 100, category: 'special' },
-  { id: 'night_owl', name: 'Búho Nocturno', description: 'Practica después de las 8 PM', emoji: '🦉', requirement: 'Práctica nocturna', metaPointsReward: 100, category: 'special' },
-  { id: 'weekend_warrior', name: 'Guerrero de Fin de Semana', description: 'Practica en sábado y domingo', emoji: '⚔️', requirement: 'Fin de semana', metaPointsReward: 150, category: 'special' },
+  { id: 'suma_king', name: 'Rey de la Suma', description: 'Domina todas las lecciones de suma', icon: Plus, iconColor: 'text-green-500', requirement: 'Suma completa', metaPointsReward: 250, category: 'special' },
+  { id: 'resta_king', name: 'Rey de la Resta', description: 'Domina todas las lecciones de resta', icon: Minus, iconColor: 'text-blue-500', requirement: 'Resta completa', metaPointsReward: 250, category: 'special' },
+  { id: 'multi_king', name: 'Rey de la Multiplicación', description: 'Domina todas las lecciones de multiplicación', icon: Multiply, iconColor: 'text-orange-500', requirement: 'Multiplicación completa', metaPointsReward: 250, category: 'special' },
+  { id: 'division_king', name: 'Rey de la División', description: 'Domina todas las lecciones de división', icon: Divide, iconColor: 'text-pink-500', requirement: 'División completa', metaPointsReward: 250, category: 'special' },
+  { id: 'math_king', name: 'REY DE LAS MATEMÁTICAS', description: '¡Has dominado TODAS las operaciones!', icon: Crown, iconColor: 'text-yellow-500', requirement: 'Todo completo', metaPointsReward: 2000, category: 'special' },
+  { id: 'draco_friend', name: 'Amigo de Draco', description: 'Usa el chat con Draco 10 veces', icon: Flame, iconColor: 'text-red-500', requirement: '10 conversaciones', metaPointsReward: 150, category: 'special' },
+  { id: 'shopping_expert', name: 'Fashionista Matemático', description: 'Desbloquea 5 outfits para Draco', icon: Shirt, iconColor: 'text-violet-500', requirement: '5 outfits', metaPointsReward: 200, category: 'special' },
+  { id: 'social_butterfly', name: 'Mariposa Social', description: 'Únete a una clase', icon: Users, iconColor: 'text-sky-500', requirement: 'Unirse a clase', metaPointsReward: 100, category: 'special' },
+  { id: 'top_student', name: 'Estudiante Estrella', description: 'Llega al Top 3 de tu clase', icon: Star, iconColor: 'text-amber-500', requirement: 'Top 3', metaPointsReward: 300, category: 'special' },
+  { id: 'helper', name: 'Ayudante', description: 'Ayuda a otro estudiante', icon: HandHelping, iconColor: 'text-emerald-500', requirement: 'Ayudar', metaPointsReward: 150, category: 'special' },
+  { id: 'early_bird', name: 'Madrugador', description: 'Practica antes de las 8 AM', icon: Sunrise, iconColor: 'text-orange-400', requirement: 'Práctica temprana', metaPointsReward: 100, category: 'special' },
+  { id: 'night_owl', name: 'Búho Nocturno', description: 'Practica después de las 8 PM', icon: Moon, iconColor: 'text-indigo-600', requirement: 'Práctica nocturna', metaPointsReward: 100, category: 'special' },
+  { id: 'weekend_warrior', name: 'Guerrero de Fin de Semana', description: 'Practica en sábado y domingo', icon: Swords, iconColor: 'text-slate-700', requirement: 'Fin de semana', metaPointsReward: 150, category: 'special' },
 ];
 
 export function BadgesSystem({ isOpen, onClose }: BadgesSystemProps) {
@@ -110,7 +141,7 @@ export function BadgesSystem({ isOpen, onClose }: BadgesSystemProps) {
       
       updateMetaPoints(badge.metaPointsReward);
       
-      alert(`¡Felicidades! Has desbloqueado la insignia "${badge.name}" y ganado ${badge.metaPointsReward} MetaPoints! 🎉`);
+      alert(`¡Felicidades! Has desbloqueado la insignia "${badge.name}" y ganado ${badge.metaPointsReward} MetaPoints!`);
       window.location.reload();
     }
   };
@@ -183,6 +214,7 @@ export function BadgesSystem({ isOpen, onClose }: BadgesSystemProps) {
                   const isUnlocked = checkBadgeUnlocked(badge);
                   const progress = calculateProgress(badge);
                   const canClaim = progress === 100 && !isUnlocked;
+                  const BadgeIcon = badge.icon;
 
                   return (
                     <motion.div
@@ -197,7 +229,9 @@ export function BadgesSystem({ isOpen, onClose }: BadgesSystemProps) {
                       }`}
                     >
                       <div className="flex items-start justify-between mb-3">
-                        <span className="text-5xl">{badge.emoji}</span>
+                        <div className="w-14 h-14 rounded-2xl bg-white border-2 border-gray-200 flex items-center justify-center">
+                          <BadgeIcon className={`w-8 h-8 ${badge.iconColor}`} />
+                        </div>
                         {isUnlocked && (
                           <CheckCircle className="w-8 h-8 text-green-600" />
                         )}

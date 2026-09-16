@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Trophy, ArrowLeft, Sparkles, Coins, X } from 'lucide-react';
+import { Heart, Trophy, ArrowLeft, Sparkles, Coins, Lightbulb, Pencil } from 'lucide-react';
 import dragonCharacter from "../../assets/draco.png";
 import { useUser } from '../utils/userContext';
+import { DrawingBoard } from './DrawingBoard';
 
 interface MathProblem {
   question: string;
@@ -27,7 +28,7 @@ interface ImprovedMathPracticeProps {
 }
 
 export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }: ImprovedMathPracticeProps) {
-  const { user, updateMetaPoints, updateHearts, updateProgress } = useUser();
+  const { user, updateHearts, updateProgress, updateMetaPoints } = useUser();
   const [currentProblem, setCurrentProblem] = useState<MathProblem | null>(null);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
@@ -35,11 +36,13 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
   const [streak, setStreak] = useState(0);
   const [questionsAnswered, setQuestionsAnswered] = useState(0);
   const [errors, setErrors] = useState(0);
-  const [hearts, setHearts] = useState(user?.hearts || 5);
+  const [hearts, setHearts] = useState(user?.hearts ?? 20);
   const [showConfetti, setShowConfetti] = useState(false);
   const [dragonMessage, setDragonMessage] = useState('¡Vamos! ¡Tú puedes!');
   const [attemptHistory, setAttemptHistory] = useState<AttemptRecord[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showTiredDraco, setShowTiredDraco] = useState(false);
+  const [showDrawingBoard, setShowDrawingBoard] = useState(false);
 
   const MAX_QUESTIONS = 10;
   const MAX_ERRORS = 5;
@@ -50,76 +53,127 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
 
   const generateProblem = (): MathProblem => {
     let num1: number, num2: number, correctAnswer: number, question: string, explanation: string;
-    const difficultyMultiplier = getDifficultyMultiplier(lessonLevel);
-    
+    const level = Math.max(1, lessonLevel);
+    const difficultyMultiplier = getDifficultyMultiplier(level);
+
     switch (category) {
-      case 'suma':
-        num1 = Math.floor(Math.random() * (50 * difficultyMultiplier)) + 1;
-        num2 = Math.floor(Math.random() * (50 * difficultyMultiplier)) + 1;
+      case 'suma': {
+        // Hundreds/thousands scaled by level (three-digit+)
+        const minBase = 100 * level;
+        const maxBase = 999 * level;
+        num1 = Math.floor(Math.random() * (maxBase - minBase + 1)) + minBase;
+        num2 = Math.floor(Math.random() * (maxBase - minBase + 1)) + minBase;
         correctAnswer = num1 + num2;
         question = `${num1} + ${num2} = ?`;
-        explanation = `Para sumar ${num1} + ${num2}, puedes contar hacia adelante ${num2} veces desde ${num1}, lo que da ${correctAnswer}.`;
+        explanation = `Para sumar ${num1} + ${num2}, suma por columnas (unidades, decenas, centenas...). El resultado es ${correctAnswer}.`;
         break;
-      case 'resta':
-        num1 = Math.floor(Math.random() * (50 * difficultyMultiplier)) + 20;
-        num2 = Math.floor(Math.random() * (20 * difficultyMultiplier)) + 1;
+      }
+      case 'resta': {
+        // Large numbers with borrowing
+        const minBase = 200 * level;
+        const maxBase = 999 * level;
+        num1 = Math.floor(Math.random() * (maxBase - minBase + 1)) + minBase;
+        // Prefer subtrahend that forces borrowing in at least one place
+        num2 = Math.floor(Math.random() * (num1 - 50)) + 50;
+        const ones1 = num1 % 10;
+        const ones2 = num2 % 10;
+        if (ones2 <= ones1 && ones1 < 9) {
+          num2 = num2 - ones2 + ((ones1 + 1 + Math.floor(Math.random() * (9 - ones1))) % 10);
+          if (num2 >= num1) num2 = Math.max(10, num1 - 17);
+        }
         if (num2 > num1) [num1, num2] = [num2, num1];
         correctAnswer = num1 - num2;
         question = `${num1} - ${num2} = ?`;
-        explanation = `Para restar ${num1} - ${num2}, quitas ${num2} de ${num1}, quedando ${correctAnswer}.`;
+        explanation = `Para restar ${num1} - ${num2}, resta por columnas prestando cuando haga falta. El resultado es ${correctAnswer}.`;
         break;
-      case 'multiplicacion':
-        num1 = Math.floor(Math.random() * (10 * Math.min(difficultyMultiplier, 2))) + 1;
-        num2 = Math.floor(Math.random() * (10 * Math.min(difficultyMultiplier, 2))) + 1;
+      }
+      case 'multiplicacion': {
+        // 2-digit × 1-digit early; 2-digit × 2-digit at higher levels
+        if (level <= 2) {
+          num1 = Math.floor(Math.random() * 90) + 10;
+          num2 = Math.floor(Math.random() * 8) + 2;
+        } else if (level <= 4) {
+          num1 = Math.floor(Math.random() * 90) + 10;
+          num2 = Math.floor(Math.random() * 12) + 3;
+        } else {
+          num1 = Math.floor(Math.random() * 80) + 12;
+          num2 = Math.floor(Math.random() * 80) + 12;
+        }
         correctAnswer = num1 * num2;
         question = `${num1} × ${num2} = ?`;
-        explanation = `${num1} × ${num2} significa sumar ${num1} veces ${num2}: ${Array(num1).fill(num2).join(' + ')} = ${correctAnswer}.`;
+        explanation = `${num1} × ${num2} = ${correctAnswer}. Puedes descomponer ${num1} y multiplicar cada parte por ${num2}, luego sumar.`;
         break;
-      case 'division':
-        num2 = Math.floor(Math.random() * (10 * Math.min(difficultyMultiplier, 2))) + 1;
-        correctAnswer = Math.floor(Math.random() * (10 * Math.min(difficultyMultiplier, 2))) + 1;
+      }
+      case 'division': {
+        // Exact divisions with larger dividends
+        num2 = Math.floor(Math.random() * (8 + level * 2)) + 2;
+        correctAnswer = Math.floor(Math.random() * (20 + level * 15)) + 8;
         num1 = num2 * correctAnswer;
         question = `${num1} ÷ ${num2} = ?`;
         explanation = `${num1} ÷ ${num2} = ${correctAnswer} porque ${num2} × ${correctAnswer} = ${num1}.`;
         break;
-      case 'potencias':
-        num1 = Math.floor(Math.random() * (3 + lessonLevel)) + 2;
-        num2 = Math.floor(Math.random() * (2 + Math.floor(lessonLevel / 2))) + 2;
+      }
+      case 'potencias': {
+        // Squares/cubes appropriate for 5th grade
+        if (level <= 2 || Math.random() < 0.65) {
+          num1 = Math.floor(Math.random() * 12) + 2;
+          num2 = 2;
+        } else {
+          num1 = Math.floor(Math.random() * 6) + 2;
+          num2 = 3;
+        }
         correctAnswer = Math.pow(num1, num2);
         question = `${num1}^${num2} = ?`;
         explanation = `${num1}^${num2} significa multiplicar ${num1} por sí mismo ${num2} veces: ${Array(num2).fill(num1).join(' × ')} = ${correctAnswer}.`;
         break;
-      case 'radicacion':
-        correctAnswer = Math.floor(Math.random() * (8 + lessonLevel)) + 2;
+      }
+      case 'radicacion': {
+        // Perfect squares up to 400+
+        const maxRoot = Math.min(25, 12 + level * 2);
+        correctAnswer = Math.floor(Math.random() * (maxRoot - 5)) + 6;
         num1 = correctAnswer * correctAnswer;
         question = `√${num1} = ?`;
         explanation = `√${num1} = ${correctAnswer} porque ${correctAnswer} × ${correctAnswer} = ${num1}.`;
         break;
-      case 'polinomios':
-        num1 = Math.floor(Math.random() * (5 * difficultyMultiplier)) + 1;
-        num2 = Math.floor(Math.random() * (10 * difficultyMultiplier)) + 1;
-        const coef = 2 + Math.floor(lessonLevel / 2);
-        correctAnswer = coef * num1 + num2;
-        question = `${coef}(${num1}) + ${num2} = ?`;
-        explanation = `Primero multiplicamos: ${coef} × ${num1} = ${coef * num1}. Luego sumamos: ${coef * num1} + ${num2} = ${correctAnswer}.`;
+      }
+      case 'polinomios': {
+        // Evaluate 3x+5 style, or combine like terms with numeric answer
+        if (Math.random() < 0.5) {
+          const coef = Math.floor(Math.random() * (4 + level)) + 2;
+          const constant = Math.floor(Math.random() * 20) + 1;
+          const xVal = Math.floor(Math.random() * (8 + level)) + 1;
+          correctAnswer = coef * xVal + constant;
+          question = `Si x = ${xVal}, ¿cuánto vale ${coef}x + ${constant}?`;
+          explanation = `Sustituye x: ${coef}(${xVal}) + ${constant} = ${coef * xVal} + ${constant} = ${correctAnswer}.`;
+        } else {
+          const a = Math.floor(Math.random() * (6 + level)) + 1;
+          const b = Math.floor(Math.random() * (6 + level)) + 1;
+          const c = Math.floor(Math.random() * 10) + 1;
+          const d = Math.floor(Math.random() * 10) + 1;
+          correctAnswer = a + b;
+          question = `¿Cuál es el coeficiente de x en (${a}x + ${c}) + (${b}x + ${d})?`;
+          explanation = `Suma términos semejantes: ${a}x + ${b}x = ${correctAnswer}x. El coeficiente de x es ${correctAnswer}.`;
+        }
         break;
+      }
       default:
-        num1 = Math.floor(Math.random() * 50) + 1;
-        num2 = Math.floor(Math.random() * 50) + 1;
+        num1 = Math.floor(Math.random() * (100 * difficultyMultiplier)) + 100;
+        num2 = Math.floor(Math.random() * (100 * difficultyMultiplier)) + 100;
         correctAnswer = num1 + num2;
         question = `${num1} + ${num2} = ?`;
         explanation = `${num1} + ${num2} = ${correctAnswer}`;
     }
 
     const options = [correctAnswer];
+    const spread = Math.max(15, Math.abs(Math.round(correctAnswer * 0.08)), 10 * difficultyMultiplier);
     while (options.length < 4) {
-      const offset = Math.floor(Math.random() * (20 * difficultyMultiplier)) - 10 * difficultyMultiplier;
-      const option = Math.max(0, Math.round(correctAnswer + offset));
+      const offset = Math.floor(Math.random() * spread * 2) - spread;
+      const option = Math.max(0, Math.round(correctAnswer + (offset === 0 ? spread : offset)));
       if (!options.includes(option)) {
         options.push(option);
       }
     }
-    
+
     options.sort(() => Math.random() - 0.5);
 
     return { question, correctAnswer, options, explanation };
@@ -129,9 +183,9 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
     setCurrentProblem(generateProblem());
   }, [category, lessonLevel]);
 
-  const handleAnswer = (answer: number) => {
+  const handleAnswer = async (answer: number) => {
     if (selectedAnswer !== null || !currentProblem) return;
-    
+
     setSelectedAnswer(answer);
     const correct = answer === currentProblem.correctAnswer;
     setIsCorrect(correct);
@@ -149,42 +203,59 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
     if (correct) {
       const earnedPoints = 10 + streak * 2;
 
-      // Monedas de esta partida
       setMetaPoints((prev) => prev + earnedPoints);
-
-     // Monedas permanentes del estudiante (Dashboard)
-      updateMetaPoints(earnedPoints);
-
       setStreak((prev) => prev + 1);
       setShowConfetti(true);
-      
+
+      try {
+        await updateMetaPoints(earnedPoints);
+      } catch (error) {
+        console.error("Error al guardar META Points:", error);
+      }
+
       const messages = [
-        '¡Excelente! ',
-        '¡Perfecto! ',
-        '¡Increíble! ',
-        '¡Genial! ',
-        '¡Fantástico! '
+        "¡Excelente!",
+        "¡Perfecto!",
+        "¡Increíble!",
+        "¡Genial!",
+        "¡Fantástico!",
       ];
-      setDragonMessage(messages[Math.floor(Math.random() * messages.length)]);
+
+      setDragonMessage(
+        messages[Math.floor(Math.random() * messages.length)]
+      );
     } else {
       setStreak(0);
       setErrors(errors + 1);
       setHearts(hearts - 1);
-      setDragonMessage('¡Intenta de nuevo! ');
+      setDragonMessage("¡Intenta de nuevo!");
     }
 
-    setQuestionsAnswered(questionsAnswered + 1);
+    setQuestionsAnswered((prev) => prev + 1);
 
     setTimeout(() => {
       setSelectedAnswer(null);
       setIsCorrect(null);
       setShowConfetti(false);
 
-      if (questionsAnswered + 1 >= MAX_QUESTIONS || errors + (!correct ? 1 : 0) >= MAX_ERRORS || hearts - (!correct ? 1 : 0) <= 0) {
+      const nuevasPreguntas = questionsAnswered + 1;
+      const nuevosErrores = errors + (!correct ? 1 : 0);
+      const nuevosCorazones = hearts - (!correct ? 1 : 0);
+
+      if (nuevosCorazones <= 0) {
+        updateHearts(0);
+        setShowTiredDraco(true);
+        return;
+      }
+
+      if (
+        nuevasPreguntas >= MAX_QUESTIONS ||
+        nuevosErrores >= MAX_ERRORS
+      ) {
         finishPractice();
       } else {
         setCurrentProblem(generateProblem());
-        setDragonMessage('¡Vamos! ¡Tú puedes!');
+        setDragonMessage("¡Vamos! ¡Tú puedes!");
       }
     }, 2000);
   };
@@ -193,36 +264,67 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
     const correctAnswers = attemptHistory.filter(a => a.isCorrect).length + (isCorrect ? 1 : 0);
     const totalQuestions = questionsAnswered + 1;
     const accuracy = (correctAnswers / totalQuestions) * 100;
-    
+
     let stars = 0;
     if (accuracy >= 90) stars = 3;
-    else if (accuracy >= 70) stars = 2;
-    else if (accuracy >= 50) stars = 1;
+    else if (accuracy >= 80) stars = 2;
+    else if (accuracy >= 60) stars = 1;
 
-    // Las monedas ya fueron guardadas en cada respuesta correcta.
     updateHearts(hearts);
 
     updateProgress(
       category,
       lessonId,
       stars,
-      errors + (isCorrect === false ? 1 : 0)
+      errors + (isCorrect === false ? 1 : 0),
+      accuracy
     );
-    
+
     setShowResults(true);
   };
 
   if (!currentProblem || !user) return null;
 
+  if (showTiredDraco) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center p-8">
+        <motion.div
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full text-center"
+        >
+          <motion.img
+            animate={{ y: [0, -8, 0] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+            src={dragonCharacter}
+            alt="Draco"
+            className="w-40 h-40 mx-auto mb-6"
+          />
+          <p className="text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
+            Estoy cansado, necesito recuperar mi energía, mañana seguiremos en la aventura, tú también descansa.
+          </p>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={onBack}
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black text-lg"
+          >
+            Volver
+          </motion.button>
+        </motion.div>
+      </div>
+    );
+  }
+
   if (showResults) {
     const correctAnswers = attemptHistory.filter(a => a.isCorrect).length;
     const incorrectAttempts = attemptHistory.filter(a => !a.isCorrect);
     const accuracy = (correctAnswers / attemptHistory.length) * 100;
-    
+
     let stars = 0;
     if (accuracy >= 90) stars = 3;
-    else if (accuracy >= 70) stars = 2;
-    else if (accuracy >= 50) stars = 1;
+    else if (accuracy >= 80) stars = 2;
+    else if (accuracy >= 60) stars = 1;
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8">
@@ -302,7 +404,10 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
                             </div>
                           </div>
                           <div className="bg-green-100 p-3 rounded-xl border-2 border-green-300">
-                            <p className="text-sm font-bold text-green-800">💡 Explicación:</p>
+                            <p className="text-sm font-bold text-green-800 flex items-center gap-1">
+                              <Lightbulb className="w-4 h-4 text-yellow-500" />
+                              Explicación:
+                            </p>
                             <p className="text-sm text-gray-700 font-semibold mt-1">{attempt.explanation}</p>
                           </div>
                         </div>
@@ -388,6 +493,18 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
           </button>
 
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => setShowDrawingBoard((prev) => !prev)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
+                showDrawingBoard
+                  ? 'bg-indigo-200 text-indigo-800'
+                  : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
+              }`}
+            >
+              <Pencil className="w-5 h-5" />
+              <span className="font-bold">Tablero</span>
+            </button>
+
             <div className="flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-xl">
               <Coins className="w-5 h-5 text-yellow-600" />
               <span className="font-bold text-yellow-700">{metaPoints}</span>
@@ -523,6 +640,12 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
             </AnimatePresence>
           </div>
         </div>
+
+        {showDrawingBoard && (
+          <div className="mt-8 bg-white rounded-3xl shadow-xl p-4">
+            <DrawingBoard height={280} />
+          </div>
+        )}
       </div>
     </div>
   );

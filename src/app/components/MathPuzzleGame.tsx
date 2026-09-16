@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { X, Clock, Trash2, Equal } from 'lucide-react';
-import dragonCharacter from 'figma:asset/a7a237254f335b0739e1c16c0d3ef0796ab00ae9.png';
+import { X, Clock, Trash2, Equal, Gamepad2, ClipboardList, Target, Rocket, Star, PartyPopper, Coins, RotateCcw, DoorOpen, Timer } from 'lucide-react';
+import dragonCharacter from '../../assets/draco.png';
 import { useUser } from '../utils/userContext';
 
 interface MathPuzzleGameProps {
@@ -162,34 +162,26 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
     }
 
     if (isCorrect) {
-      setFeedback('correct');
       setScore(score + 10);
       setCorrectCount(correctCount + 1);
     } else {
-      setFeedback('wrong');
       setErrorCount(errorCount + 1);
     }
 
-    setTimeout(() => {
-      nextProblem();
-    }, 1000);
+    nextProblem();
   };
 
   const handleEqual = () => {
     if (!currentProblem || feedback) return;
 
     if (currentProblem.leftValue === currentProblem.rightValue) {
-      setFeedback('correct');
       setScore(score + 15);
       setCorrectCount(correctCount + 1);
     } else {
-      setFeedback('wrong');
       setErrorCount(errorCount + 1);
     }
 
-    setTimeout(() => {
-      nextProblem();
-    }, 1000);
+    nextProblem();
   };
 
   const handleDiscard = () => {
@@ -233,8 +225,9 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
         {gameState === 'intro' && (
           <div className="p-8">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
-                🎮 METAJUEGOS - Puzzle Matemático
+              <h2 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 flex items-center gap-3">
+                <Gamepad2 className="w-10 h-10 text-purple-600" />
+                METAJUEGOS - Puzzle Matemático
               </h2>
               <button
                 onClick={onClose}
@@ -250,33 +243,39 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
             </div>
 
             <div className="bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl mb-6 border-2 border-purple-300">
-              <h4 className="text-xl font-black text-gray-800 mb-4">📋 Instrucciones</h4>
+              <h4 className="text-xl font-black text-gray-800 mb-4 flex items-center gap-2">
+                <ClipboardList className="w-6 h-6 text-purple-600" />
+                Instrucciones
+              </h4>
               <ul className="space-y-3 text-gray-700 font-semibold">
                 <li className="flex items-start gap-3">
-                  <span className="text-2xl">1️⃣</span>
+                  <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black flex items-center justify-center flex-shrink-0">1</span>
                   <span>Elige entre dos números o resultados matemáticos</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-2xl">2️⃣</span>
+                  <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black flex items-center justify-center flex-shrink-0">2</span>
                   <span>Sigue la instrucción superior (mayor o menor)</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-2xl">3️⃣</span>
+                  <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black flex items-center justify-center flex-shrink-0">3</span>
                   <span>Si ambos valores son iguales, presiona el botón "Igual"</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-2xl">4️⃣</span>
+                  <span className="w-8 h-8 rounded-full bg-purple-500 text-white font-black flex items-center justify-center flex-shrink-0">4</span>
                   <span>Puedes descartar hasta 5 veces si no puedes resolver</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <span className="text-2xl">⏱️</span>
+                  <Timer className="w-8 h-8 text-blue-500 flex-shrink-0" />
                   <span>Tienes 1 minuto y 30 segundos para obtener el mejor puntaje</span>
                 </li>
               </ul>
             </div>
 
             <div className="bg-gradient-to-r from-blue-100 to-cyan-100 p-6 rounded-2xl mb-6 border-2 border-blue-300">
-              <h4 className="text-xl font-black text-gray-800 mb-3">🎯 Reglas de Color</h4>
+              <h4 className="text-xl font-black text-gray-800 mb-3 flex items-center gap-2">
+                <Target className="w-6 h-6 text-blue-600" />
+                Reglas de Color
+              </h4>
               <div className="space-y-2">
                 <div className="flex items-center gap-4">
                   <span className="text-4xl font-black text-red-500">Mayor</span>
@@ -293,9 +292,10 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={startGame}
-              className="w-full py-6 rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 text-white font-black text-2xl"
+              className="w-full py-6 rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 text-white font-black text-2xl flex items-center justify-center gap-3"
             >
-              🚀 ¡Iniciar Juego!
+              <Rocket className="w-7 h-7" />
+              ¡Iniciar Juego!
             </motion.button>
           </div>
         )}
@@ -309,8 +309,9 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
                   <Clock className="w-5 h-5 text-blue-600 inline mr-2" />
                   <span className="font-black text-xl text-blue-600">{timeLeft}s</span>
                 </div>
-                <div className="bg-yellow-100 px-4 py-2 rounded-xl border-2 border-yellow-400">
-                  <span className="font-black text-xl text-yellow-700">⭐ {score}</span>
+                <div className="bg-yellow-100 px-4 py-2 rounded-xl border-2 border-yellow-400 flex items-center gap-2">
+                  <Star className="w-5 h-5 text-yellow-600 fill-yellow-400" />
+                  <span className="font-black text-xl text-yellow-700">{score}</span>
                 </div>
               </div>
 
@@ -435,7 +436,10 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
           <div className="p-8 text-center">
             <img src={dragonCharacter} alt="Draco" className="w-48 h-48 mx-auto mb-6" />
             
-            <h2 className="text-5xl font-black text-gray-800 mb-6">¡Tiempo Terminado! 🎉</h2>
+            <h2 className="text-5xl font-black text-gray-800 mb-6 flex items-center justify-center gap-3">
+              ¡Tiempo Terminado!
+              <PartyPopper className="w-12 h-12 text-pink-500" />
+            </h2>
 
             <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-8 rounded-3xl mb-8 border-4 border-purple-400">
               <div className="grid grid-cols-3 gap-6">
@@ -455,8 +459,9 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
             </div>
 
             <div className="bg-yellow-100 p-6 rounded-2xl mb-8 border-2 border-yellow-400">
-              <p className="text-2xl font-black text-yellow-700">
-                ¡Ganaste {Math.floor(score / 2)} MetaPoints! 💰
+              <p className="text-2xl font-black text-yellow-700 flex items-center justify-center gap-2">
+                ¡Ganaste {Math.floor(score / 2)} MetaPoints!
+                <Coins className="w-7 h-7 text-yellow-600" />
               </p>
             </div>
 
@@ -465,18 +470,20 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={startGame}
-                className="flex-1 py-5 rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 text-white font-black text-xl"
+                className="flex-1 py-5 rounded-2xl bg-gradient-to-r from-green-400 to-emerald-500 text-white font-black text-xl flex items-center justify-center gap-2"
               >
-                🔄 Volver a Jugar
+                <RotateCcw className="w-6 h-6" />
+                Volver a Jugar
               </motion.button>
 
               <motion.button
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onClose}
-                className="flex-1 py-5 rounded-2xl bg-gradient-to-r from-gray-400 to-gray-600 text-white font-black text-xl"
+                className="flex-1 py-5 rounded-2xl bg-gradient-to-r from-gray-400 to-gray-600 text-white font-black text-xl flex items-center justify-center gap-2"
               >
-                🚪 Salir del Juego
+                <DoorOpen className="w-6 h-6" />
+                Salir del Juego
               </motion.button>
             </div>
           </div>

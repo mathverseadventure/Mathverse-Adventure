@@ -1,6 +1,20 @@
 import { motion } from 'motion/react';
-import { X, ShoppingBag, Check, Coins } from 'lucide-react';
-import dragonCharacter from 'figma:asset/a7a237254f335b0739e1c16c0d3ef0796ab00ae9.png';
+import {
+  X,
+  ShoppingBag,
+  Check,
+  Coins,
+  Flame,
+  WandSparkles,
+  FlaskConical,
+  Shield,
+  Anchor,
+  Rocket,
+  Eye,
+  Crown,
+  type LucideIcon,
+} from 'lucide-react';
+import dragonCharacter from '../../assets/draco.png';
 import { useUser } from '../utils/userContext';
 
 interface DracoShopProps {
@@ -13,18 +27,19 @@ interface Outfit {
   name: string;
   description: string;
   cost: number;
-  emoji: string;
+  icon: LucideIcon;
+  iconColor: string;
 }
 
 const outfits: Outfit[] = [
-  { id: 'default', name: 'Draco Original', description: '¡El look clásico de Draco!', cost: 0, emoji: '🐉' },
-  { id: 'wizard', name: 'Mago Matemático', description: 'Sombrero mágico con estrellas', cost: 100, emoji: '🧙‍♂️' },
-  { id: 'scientist', name: 'Científico Draco', description: 'Bata de laboratorio y gafas', cost: 150, emoji: '🔬' },
-  { id: 'superhero', name: 'Súper Draco', description: 'Capa de superhéroe', cost: 200, emoji: '🦸' },
-  { id: 'pirate', name: 'Pirata Matemático', description: 'Sombrero y parche de pirata', cost: 250, emoji: '🏴‍☠️' },
-  { id: 'astronaut', name: 'Astronauta Draco', description: 'Traje espacial', cost: 300, emoji: '🚀' },
-  { id: 'ninja', name: 'Ninja de Números', description: 'Disfraz de ninja', cost: 350, emoji: '🥷' },
-  { id: 'king', name: 'Rey Draco', description: 'Corona dorada y capa real', cost: 500, emoji: '👑' },
+  { id: 'default', name: 'Draco Original', description: '¡El look clásico de Draco!', cost: 0, icon: Flame, iconColor: 'text-red-500' },
+  { id: 'wizard', name: 'Mago Matemático', description: 'Sombrero mágico con estrellas', cost: 100, icon: WandSparkles, iconColor: 'text-purple-500' },
+  { id: 'scientist', name: 'Científico Draco', description: 'Bata de laboratorio y gafas', cost: 150, icon: FlaskConical, iconColor: 'text-cyan-500' },
+  { id: 'superhero', name: 'Súper Draco', description: 'Capa de superhéroe', cost: 200, icon: Shield, iconColor: 'text-blue-500' },
+  { id: 'pirate', name: 'Pirata Matemático', description: 'Sombrero y parche de pirata', cost: 250, icon: Anchor, iconColor: 'text-amber-700' },
+  { id: 'astronaut', name: 'Astronauta Draco', description: 'Traje espacial', cost: 300, icon: Rocket, iconColor: 'text-indigo-500' },
+  { id: 'ninja', name: 'Ninja de Números', description: 'Disfraz de ninja', cost: 350, icon: Eye, iconColor: 'text-slate-700' },
+  { id: 'king', name: 'Rey Draco', description: 'Corona dorada y capa real', cost: 500, icon: Crown, iconColor: 'text-yellow-500' },
 ];
 
 export function DracoShop({ isOpen, onClose }: DracoShopProps) {
@@ -43,6 +58,9 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
   const handleEquip = (outfitId: string) => {
     equipOutfit(outfitId);
   };
+
+  const currentOutfit = outfits.find(o => o.id === user.equippedOutfit);
+  const CurrentIcon = currentOutfit?.icon;
 
   return (
     <motion.div
@@ -89,9 +107,9 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
               <img src={dragonCharacter} alt="Draco" className="w-24 h-24" />
               <div>
                 <h3 className="text-xl font-black text-gray-800 mb-2">Outfit Actual</h3>
-                <p className="text-2xl font-bold text-purple-600">
-                  {outfits.find(o => o.id === user.equippedOutfit)?.emoji}{' '}
-                  {outfits.find(o => o.id === user.equippedOutfit)?.name}
+                <p className="text-2xl font-bold text-purple-600 flex items-center gap-2">
+                  {CurrentIcon && <CurrentIcon className={`w-7 h-7 ${currentOutfit?.iconColor}`} />}
+                  {currentOutfit?.name}
                 </p>
               </div>
             </div>
@@ -103,6 +121,7 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
               const owned = user.dracoOutfits.includes(outfit.id);
               const equipped = user.equippedOutfit === outfit.id;
               const canAfford = user.metaPoints >= outfit.cost;
+              const OutfitIcon = outfit.icon;
 
               return (
                 <motion.div
@@ -120,7 +139,9 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
-                      <span className="text-4xl">{outfit.emoji}</span>
+                      <div className="w-12 h-12 rounded-xl bg-white border-2 border-gray-200 flex items-center justify-center">
+                        <OutfitIcon className={`w-7 h-7 ${outfit.iconColor}`} />
+                      </div>
                       <div>
                         <h3 className="text-lg font-black text-gray-800">{outfit.name}</h3>
                         <p className="text-sm text-gray-600 font-semibold">{outfit.description}</p>

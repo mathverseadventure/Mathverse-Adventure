@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
-import { BookOpen, Play, X } from 'lucide-react';
-import dragonCharacter from 'figma:asset/a7a237254f335b0739e1c16c0d3ef0796ab00ae9.png';
+import { BookOpen, Play, X, Flame, Lightbulb, Star, Check } from 'lucide-react';
+import dragonCharacter from '../../assets/draco.png';
 
 interface LessonIntroProps {
   category: string;
@@ -140,8 +140,9 @@ export function LessonIntro({ category, lessonTitle, onStart, onClose }: LessonI
               className="w-24 h-24 flex-shrink-0"
             />
             <div>
-              <p className="text-lg font-bold text-gray-800 mb-2">
-                ¡Hola, aventurero! Soy Draco 🔥
+              <p className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
+                ¡Hola, aventurero! Soy Draco
+                <Flame className="w-5 h-5 text-orange-500" />
               </p>
               <p className="text-gray-700 font-semibold">
                 {content.intro}
@@ -152,7 +153,8 @@ export function LessonIntro({ category, lessonTitle, onStart, onClose }: LessonI
           {/* Explanation */}
           <div>
             <h3 className="text-xl font-black text-gray-800 mb-3 flex items-center gap-2">
-              📚 ¿Cómo funciona?
+              <BookOpen className="w-6 h-6 text-purple-600" />
+              ¿Cómo funciona?
             </h3>
             <p className="text-gray-700 font-semibold leading-relaxed">
               {content.explanation}
@@ -162,7 +164,8 @@ export function LessonIntro({ category, lessonTitle, onStart, onClose }: LessonI
           {/* Example */}
           <div className="bg-yellow-50 p-6 rounded-2xl border-2 border-yellow-300">
             <h3 className="text-xl font-black text-gray-800 mb-3 flex items-center gap-2">
-              💡 Ejemplo
+              <Lightbulb className="w-6 h-6 text-yellow-500" />
+              Ejemplo
             </h3>
             <p className="text-3xl font-black text-center text-gray-800 py-4">
               {content.example}
@@ -172,7 +175,8 @@ export function LessonIntro({ category, lessonTitle, onStart, onClose }: LessonI
           {/* Tips */}
           <div>
             <h3 className="text-xl font-black text-gray-800 mb-3 flex items-center gap-2">
-              ⭐ Consejos de Draco
+              <Star className="w-6 h-6 text-yellow-500 fill-yellow-400" />
+              Consejos de Draco
             </h3>
             <ul className="space-y-2">
               {content.tips.map((tip, index) => (
@@ -183,7 +187,7 @@ export function LessonIntro({ category, lessonTitle, onStart, onClose }: LessonI
                   transition={{ delay: index * 0.1 }}
                   className="flex items-start gap-3 bg-green-50 p-4 rounded-xl border-2 border-green-200"
                 >
-                  <span className="text-2xl flex-shrink-0">✓</span>
+                  <Check className="w-6 h-6 text-green-600 flex-shrink-0" />
                   <span className="text-gray-700 font-semibold">{tip}</span>
                 </motion.li>
               ))}
