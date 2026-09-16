@@ -56,3 +56,30 @@ export async function obtenerEstudiantes() {
   const respuesta = await fetch(`${API}/estudiantes`);
   return await respuesta.json();
 }
+
+// Actualizar META Points del estudiante
+export async function actualizarMetaPoints(
+  estudianteId: number,
+  puntosGanados: number
+) {
+  const respuesta = await fetch(
+    `${API}/estudiantes/${estudianteId}/meta-points`,
+    {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        meta_points: puntosGanados,
+      }),
+    }
+  );
+
+  const datos = await respuesta.json();
+
+  if (!respuesta.ok) {
+    throw new Error(datos.message || "Error al actualizar META Points.");
+  }
+
+  return datos;
+}

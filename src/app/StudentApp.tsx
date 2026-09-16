@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Heart, Plus, Minus, X, Divide, Zap, Calculator, Coins, Menu, Gamepad2 } from 'lucide-react';
+import { Flame, Heart, Plus, Minus, X, Divide, Zap, Calculator, Coins, Menu, Gamepad2, Lock, Star, Rocket } from 'lucide-react';
 import logo from "../assets/logo_mathverse.png";
 import dragonCharacter from "../assets/draco.png";
-import { useUser } from './utils/userContext';
+import { useUser, ThemeUnlocks } from './utils/userContext';
 import { DiagnosticTest } from './components/DiagnosticTest';
 import { LessonIntro } from './components/LessonIntro';
 import { ImprovedMathPractice } from './components/ImprovedMathPractice';
@@ -16,7 +16,7 @@ import { BadgesSystem } from './components/BadgesSystem';
 import { MathPuzzleGame } from './components/MathPuzzleGame';
 
 export function StudentApp() {
-  const { user, userProgress } = useUser();
+  const { user, userProgress, themeUnlocks } = useUser();
   const [showDiagnostic, setShowDiagnostic] = useState(false);
   const [diagnosticLevel, setDiagnosticLevel] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
@@ -33,19 +33,17 @@ export function StudentApp() {
   const [showPuzzleGame, setShowPuzzleGame] = useState(false);
 
   useEffect(() => {
-    // Check if diagnostic test has been completed
-    if (user) {
-      const diagnostic = localStorage.getItem(`mathverse_diagnostic_${user.id}`);
-      if (!diagnostic) {
-        setShowDiagnostic(true);
-      } else {
-        const diagData = JSON.parse(diagnostic);
-        setDiagnosticLevel(diagData.level);
-      }
+    if (!user) return;
+    const diagnostic = localStorage.getItem(`mathverse_diagnostic_${user.id}`);
+    if (!diagnostic) {
+      setShowDiagnostic(true);
+    } else {
+      const diagData = JSON.parse(diagnostic);
+      setDiagnosticLevel(diagData.level || 1);
     }
   }, [user]);
 
-  const handleDiagnosticComplete = (level: number) => {
+  const handleDiagnosticComplete = (level: number, _unlocks: ThemeUnlocks) => {
     setDiagnosticLevel(level);
     setShowDiagnostic(false);
   };
@@ -144,16 +142,22 @@ export function StudentApp() {
     },
   ];
 
-  const isLessonUnlocked = (lessonLevel: number) => {
-    return lessonLevel <= diagnosticLevel;
+  const isLessonUnlocked = (categoryId: string, lessonLevel: number) => {
+    const diagUnlock = themeUnlocks[categoryId] ?? diagnosticLevel ?? 1;
+    if (lessonLevel > diagUnlock) return false;
+    if (lessonLevel === 1) return true;
+
+    const previous = userProgress[categoryId]?.[lessonLevel - 1];
+    const accuracy = previous?.accuracy ?? (previous?.stars && previous.stars >= 2 ? 80 : 0);
+    return Boolean(previous?.completed && accuracy >= 80);
   };
 
   const getLessonData = (categoryId: string, lessonId: number) => {
-    return userProgress[categoryId]?.[lessonId] || { completed: false, stars: 0 };
+    return userProgress[categoryId]?.[lessonId] || { completed: false, stars: 0, accuracy: 0 };
   };
 
   const handleLessonClick = (category: string, lesson: { id: number; title: string; level: number }) => {
-    if (!isLessonUnlocked(lesson.level)) return;
+    if (!isLessonUnlocked(category, lesson.level)) return;
     
     setSelectedLesson(lesson);
     setSelectedCategory(category);
@@ -205,7 +209,9 @@ export function StudentApp() {
               className="flex items-center gap-2 bg-yellow-100 px-3 py-2 rounded-xl border-b-4 border-yellow-400 cursor-pointer"
             >
               <Coins className="w-5 h-5 text-yellow-600" />
-              <span className="font-bold text-lg text-yellow-700">{user.metaPoints}</span>
+              <span className="font-bold text-lg text-yellow-700">
+                {user.metaPoints ?? 0}
+              </span>
             </motion.div>
 
             <motion.div
@@ -240,37 +246,37 @@ export function StudentApp() {
                 onClick={() => { setShowProfile(true); setShowMenu(false); }}
                 className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-50 font-bold text-gray-800 transition-colors"
               >
-                👤 Mi Perfil
+                 Mi Perfil
               </button>
               <button
                 onClick={() => { setShowStats(true); setShowMenu(false); }}
                 className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-50 font-bold text-gray-800 transition-colors"
               >
-                📊 Estadísticas
+                 Estadísticas
               </button>
               <button
                 onClick={() => { setShowBadges(true); setShowMenu(false); }}
                 className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-50 font-bold text-gray-800 transition-colors"
               >
-                🏆 Logros
+                 Logros
               </button>
               <button
                 onClick={() => { setShowClassManagement(true); setShowMenu(false); }}
                 className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-50 font-bold text-gray-800 transition-colors"
               >
-                👥 Ranking
+                 Ranking
               </button>
               <button
                 onClick={() => { setShowShop(true); setShowMenu(false); }}
                 className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-50 font-bold text-gray-800 transition-colors"
               >
-                🛍️ Tienda
+                 Tienda
               </button>
               <button
                 onClick={() => { setShowPuzzleGame(true); setShowMenu(false); }}
                 className="w-full text-left px-4 py-3 rounded-xl hover:bg-indigo-50 font-bold text-gray-800 transition-colors"
               >
-                🎲 Juego de rompecabezas
+                 Juego de rompecabezas
               </button>
             </motion.div>
           )}
@@ -303,7 +309,7 @@ export function StudentApp() {
                   className="w-56 h-56 md:w-72 md:h-72 mx-auto mb-6"
                 />
                 <h1 className="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl">
-                  ¡Hola, {user.name}! 🎉
+                  ¡Hola, {user.name}! 
                 </h1>
                 <p className="text-2xl md:text-3xl text-white font-bold drop-shadow-lg">
                   ¡Elige tu aventura matemática!
@@ -382,7 +388,7 @@ export function StudentApp() {
                       <div className="space-y-16 relative" style={{ zIndex: 1 }}>
                         {category.lessons.map((lesson, index) => {
                           const lessonData = getLessonData(category.id, lesson.id);
-                          const isUnlocked = isLessonUnlocked(lesson.level);
+                          const isUnlocked = isLessonUnlocked(category.id, lesson.level);
                           const alignment = index % 2 === 0 ? 'justify-start' : 'justify-end';
 
                           return (
@@ -408,11 +414,11 @@ export function StudentApp() {
                                   }`}
                                 >
                                   {!isUnlocked ? (
-                                    <span className="text-6xl">🔒</span>
+                                    <Lock className="w-16 h-16 text-gray-600" />
                                   ) : lessonData.completed ? (
-                                    <span className="text-6xl">⭐</span>
+                                    <Star className="w-16 h-16 text-yellow-400 fill-yellow-400" />
                                   ) : (
-                                    <span className="text-6xl">🚀</span>
+                                    <Rocket className="w-16 h-16 text-indigo-500" />
                                   )}
                                 </div>
 
