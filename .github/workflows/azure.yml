@@ -1,0 +1,45 @@
+name: Deploy Mathverse a Azure
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, xml, ctype, json, bcmath, pdo_mysql, gd, intl, zip, fileinfo
+
+      - name: Instalar dependencias PHP (backend)
+        working-directory: mathverse-backend
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Compilar React (frontend)
+        working-directory: Mathverse-frontend
+        run: |
+          npm ci
+          npm run build
+
+      - name: Copiar React dentro de public de Laravel
+        run: cp -r Mathverse-frontend/dist/. mathverse-backend/public/
+
+      - name: Empaquetar
+        working-directory: mathverse-backend
+        run: zip -r ../release.zip . -x ".git/*" "tests/*" ".env" "node_modules/*" "database/*.sqlite"
+
+      - name: Desplegar
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: release.zip
