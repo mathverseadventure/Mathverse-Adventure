@@ -31,21 +31,22 @@ export function Login() {
 
     try {
       if (isLogin) {
+        const cleanEmail = email.trim().toLowerCase();
         if (userType === 'student') {
-          const estudiante = await iniciarSesion(email, password);
+          const estudiante = await iniciarSesion(cleanEmail, password);
           await setLoggedStudent(estudiante);
           alert(`¡Bienvenido ${estudiante.nombre}!`);
           return;
         }
 
         try {
-          const docente = await iniciarSesionDocente(email, password);
+          const docente = await iniciarSesionDocente(cleanEmail, password);
           setLoggedTeacher(docente);
           return;
         } catch {
-          const ok = await login(email, password, 'teacher');
+          const ok = await login(cleanEmail, password, 'teacher');
           if (!ok) {
-            setError('Correo o contraseña de docente incorrectos.');
+            setError('Credenciales inválidas. Verifique su correo y contraseña.');
             return;
           }
           return;
@@ -248,6 +249,7 @@ export function Login() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  autoComplete="username"
                   className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold"
                   placeholder="tu@email.com"
                 />
@@ -282,6 +284,7 @@ export function Login() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
+                  autoComplete={isLogin ? "current-password" : "new-password"}
                   className="w-full pl-12 pr-4 py-3 rounded-xl border-2 border-gray-200 focus:border-purple-400 focus:outline-none font-semibold"
                   placeholder="••••••••"
                 />
@@ -364,7 +367,7 @@ export function Login() {
 
           <div className="mt-6 p-4 bg-blue-50 rounded-xl border-2 border-blue-200">
             <p className="text-xs font-bold text-blue-800 mb-2 flex items-center gap-1">
-              <BookOpen className="w-3 h-3" /> Demo - Crear nueva cuenta o usar:
+              <BookOpen className="w-3 h-3" /> Cuentas didácticas de prueba:
             </p>
             <p className="text-xs text-blue-700">
               <strong>Estudiante:</strong> student@demo.com / demo123

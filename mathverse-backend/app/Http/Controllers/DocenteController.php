@@ -32,7 +32,7 @@ class DocenteController extends Controller
         $docente = Docente::create([
             'nombre' => $request->nombre,
             'apellido' => $request->apellido,
-            'correo' => $request->correo,
+            'correo' => strtolower(trim($request->correo)),
             'password' => Hash::make($request->password),
             'colegio' => $request->colegio,
             'curso' => $request->curso,
@@ -40,34 +40,43 @@ class DocenteController extends Controller
 
         return response()->json([
             'mensaje' => 'Docente registrado correctamente',
-            'docente' => $docente,
+            'docente' => $docente->makeHidden(['password']),
         ], 201);
     }
 
+    // LOGIN DE DOCENTES SEGURO
     public function login(Request $request)
     {
-        $request->validate([
-            'correo' => 'required|email',
-            'password' => 'required',
+        // 1. Validación estricta en el servidor
+        $credentials = $request->validate([
+            'correo' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string'],
         ]);
 
-        $docente = Docente::where('correo', $request->correo)->first();
+        $correo = strtolower(trim($credentials['correo']));
+        $docente = Docente::where('correo', $correo)->first();
 
-        if (!$docente) {
-            return response()->json([
-                'message' => 'Correo no encontrado.',
-            ], 404);
-        }
+        // 2. Prevención de enumeración de usuarios y Timing Attacks
+        $dummyHash = '$2y$10$e8w8G18QZf9vH9k/72gOteJ.gqV7t972827182819281928192819';
+        $passwordMatches = $docente
+            ? Hash::check($credentials['password'], $docente->password)
+            : Hash::check($credentials['password'], $dummyHash);
 
-        if (!Hash::check($request->password, $docente->password)) {
+        if (!$docente || !$passwordMatches) {
             return response()->json([
-                'message' => 'Contraseña incorrecta.',
+                'message' => 'Credenciales inválidas. Verifique su correo y contraseña.',
             ], 401);
         }
 
+        // 3. Regeneración de sesión contra Session Fixation
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        // 4. Retornar datos ocultando contraseña
         return response()->json([
             'message' => 'Inicio de sesión exitoso.',
-            'docente' => $docente,
+            'docente' => $docente->makeHidden(['password']),
         ]);
     }
 }

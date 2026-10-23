@@ -29,7 +29,7 @@ export async function registrarEstudiante(estudiante: Estudiante) {
   return datos;
 }
 
-// Iniciar sesión de estudiante
+// Iniciar sesión de estudiante seguro
 export async function iniciarSesion(correo: string, password: string) {
   const respuesta = await fetch(`${API}/login`, {
     method: "POST",
@@ -37,15 +37,18 @@ export async function iniciarSesion(correo: string, password: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      correo,
+      correo: correo.trim().toLowerCase(),
       password,
     }),
   });
 
-  const datos = await respuesta.json();
+  const datos = await respuesta.json().catch(() => ({}));
 
   if (!respuesta.ok) {
-    throw new Error(datos.message || "Error al iniciar sesión");
+    if (respuesta.status === 429) {
+      throw new Error("Demasiados intentos de acceso fallidos. Por seguridad, espera 1 minuto.");
+    }
+    throw new Error(datos.message || "Credenciales inválidas");
   }
 
   return datos.estudiante;

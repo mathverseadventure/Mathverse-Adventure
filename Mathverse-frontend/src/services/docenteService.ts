@@ -37,13 +37,19 @@ export async function iniciarSesionDocente(correo: string, password: string) {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ correo, password }),
+    body: JSON.stringify({ 
+      correo: correo.trim().toLowerCase(), 
+      password 
+    }),
   });
 
-  const datos = await respuesta.json();
+  const datos = await respuesta.json().catch(() => ({}));
 
   if (!respuesta.ok) {
-    throw new Error(datos.message || "Error al iniciar sesión como docente");
+    if (respuesta.status === 429) {
+      throw new Error("Demasiados intentos de acceso fallidos. Por seguridad, espera 1 minuto.");
+    }
+    throw new Error(datos.message || "Credenciales inválidas.");
   }
 
   return datos.docente;

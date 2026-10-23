@@ -30,7 +30,7 @@ class EstudianteController extends Controller
         $estudiante = Estudiante::create([
             'nombre' => $request->nombre,
             'apellido' => $request->apellido,
-            'correo' => $request->correo,
+            'correo' => strtolower(trim($request->correo)),
             'password' => Hash::make($request->password),
             'edad' => $request->edad,
             'grado' => $request->grado,
@@ -46,7 +46,7 @@ class EstudianteController extends Controller
 
         return response()->json([
             'mensaje' => 'Estudiante registrado correctamente',
-            'estudiante' => $estudiante
+            'estudiante' => $estudiante->makeHidden(['password'])
         ], 201);
     }
 
@@ -76,50 +76,59 @@ class EstudianteController extends Controller
         ]);
     }
 
-    // LOGIN DEL ESTUDIANTE
-public function login(Request $request)
-{
-    $request->validate([
-        'correo' => 'required|email',
-        'password' => 'required'
-    ]);
+    // LOGIN DEL ESTUDIANTE SEGURO
+    public function login(Request $request)
+    {
+        // 1. Validación estricta en el servidor
+        $credentials = $request->validate([
+            'correo' => ['required', 'email', 'max:255'],
+            'password' => ['required', 'string'],
+        ]);
 
-    $estudiante = Estudiante::where('correo', $request->correo)->first();
+        $correo = strtolower(trim($credentials['correo']));
+        $estudiante = Estudiante::where('correo', $correo)->first();
 
-    if (!$estudiante) {
+        // 2. Prevención de enumeración de usuarios y Timing Attacks
+        // Usamos un hash falso para que el tiempo de respuesta sea constante incluso si el correo no existe
+        $dummyHash = '$2y$10$e8w8G18QZf9vH9k/72gOteJ.gqV7t972827182819281928192819';
+        $passwordMatches = $estudiante
+            ? Hash::check($credentials['password'], $estudiante->password)
+            : Hash::check($credentials['password'], $dummyHash);
+
+        if (!$estudiante || !$passwordMatches) {
+            return response()->json([
+                'message' => 'Credenciales inválidas. Verifique su correo y contraseña.'
+            ], 401);
+        }
+
+        // 3. Regeneración de sesión contra Session Fixation (si hay sesión activa)
+        if ($request->hasSession()) {
+            $request->session()->regenerate();
+        }
+
+        // 4. Retornar datos ocultando contraseña
         return response()->json([
-            'message' => 'Correo no encontrado.'
-        ], 404);
+            'message' => 'Inicio de sesión exitoso.',
+            'estudiante' => $estudiante->makeHidden(['password'])
+        ]);
     }
 
-    if (!Hash::check($request->password, $estudiante->password)) {
+    public function actualizarMetaPoints(Request $request, $id)
+    {
+        $request->validate([
+            'meta_points' => 'required|integer|min:1'
+        ]);
+
+        $estudiante = Estudiante::findOrFail($id);
+
+        // Sumar las monedas ganadas al total del estudiante.
+        $estudiante->meta_points += $request->meta_points;
+
+        $estudiante->save();
+
         return response()->json([
-            'message' => 'Contraseña incorrecta.'
-        ], 401);
+            'mensaje' => 'Meta Points actualizados correctamente.',
+            'meta_points' => $estudiante->meta_points
+        ]);
     }
-
-    return response()->json([
-        'message' => 'Inicio de sesión exitoso.',
-        'estudiante' => $estudiante
-    ]);
-}
-
-public function actualizarMetaPoints(Request $request, $id)
-{
-    $request->validate([
-        'meta_points' => 'required|integer|min:1'
-    ]);
-
-    $estudiante = Estudiante::findOrFail($id);
-
-    // Sumar las monedas ganadas al total del estudiante.
-    $estudiante->meta_points += $request->meta_points;
-
-    $estudiante->save();
-
-    return response()->json([
-        'mensaje' => 'Meta Points actualizados correctamente.',
-        'meta_points' => $estudiante->meta_points
-    ]);
-}
 }
