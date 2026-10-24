@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { actualizarMetaPoints } from "../../services/estudianteService";
 import { obtenerProgreso, actualizarProgreso } from "../../services/progresoService";
+import { PASSING_THRESHOLD } from "./progressionService";
 
 export interface User {
   id: string;
@@ -140,47 +141,26 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const setLoggedStudent = async (estudiante: any) => {
-    let hearts = 20;
-    let progress: UserProgress = {};
-    let unlocks: ThemeUnlocks = { ...DEFAULT_UNLOCKS };
-    let vidasFecha = todayKey();
+    const t0 = performance.now();
+    // 1. CARGA INMEDIATA DESDE CACHÉ LOCAL (0 ms)
+    // Permite que el estudiante ingrese a la pantalla principal en < 100 ms
+    const cachedProgress = JSON.parse(
+      localStorage.getItem(`mathverse_progress_${estudiante.id}`) || "{}"
+    );
+    const cachedUnlocks = JSON.parse(
+      localStorage.getItem(`mathverse_unlocks_${estudiante.id}`) ||
+        JSON.stringify(DEFAULT_UNLOCKS)
+    );
+    // Recuperar trajes comprados y traje equipado previamente para que persistan entre sesiones
+    const cachedOutfits = JSON.parse(
+      localStorage.getItem(`mathverse_outfits_${estudiante.id}`) || '["original"]'
+    );
+    const cachedEquipped =
+      localStorage.getItem(`mathverse_equipped_${estudiante.id}`) ||
+      estudiante.avatar ||
+      "original";
 
-    try {
-      const progreso = await obtenerProgreso(estudiante.id);
-      const synced = syncHeartsDaily(
-        progreso.vidas ?? 20,
-        progreso.vidas_fecha
-      );
-      hearts = synced.hearts;
-      vidasFecha = synced.date;
-      progress = progreso.detalle_niveles || {};
-      unlocks = progreso.desbloqueos || unlocks;
-
-      if (progreso.diagnostico) {
-        localStorage.setItem(
-          `mathverse_diagnostic_${estudiante.id}`,
-          JSON.stringify(progreso.diagnostico)
-        );
-      }
-
-      if (synced.hearts !== progreso.vidas || progreso.vidas_fecha !== vidasFecha) {
-        await persistProgreso(estudiante.id, {
-          vidas: hearts,
-          vidas_fecha: vidasFecha,
-          monedas: estudiante.meta_points ?? 0,
-        });
-      }
-    } catch {
-      const localProgress = JSON.parse(
-        localStorage.getItem(`mathverse_progress_${estudiante.id}`) || "{}"
-      );
-      progress = localProgress;
-      const localUnlocks = JSON.parse(
-        localStorage.getItem(`mathverse_unlocks_${estudiante.id}`) ||
-          JSON.stringify(DEFAULT_UNLOCKS)
-      );
-      unlocks = localUnlocks;
-    }
+    const initialHearts = 20;
 
     const studentUser: User = {
       id: estudiante.id.toString(),
@@ -189,28 +169,91 @@ export function UserProvider({ children }: { children: ReactNode }) {
       type: "student",
       school: "IED Divino Salvador",
       metaPoints: Number(estudiante.meta_points ?? 0),
-      hearts,
+      hearts: initialHearts,
       lastLoginDate: todayKey(),
       streakDays: 1,
-      dracoOutfits: ["default"],
-      equippedOutfit: "default",
+      dracoOutfits: Array.from(
+        new Set(["original", ...(Array.isArray(cachedOutfits) ? cachedOutfits : ["original"])])
+      ),
+      equippedOutfit: cachedEquipped === "default" ? "original" : cachedEquipped,
       classCode: undefined,
     };
 
+    // Actualización inmediata del estado local para navegación instantánea
     setUser(studentUser);
-    setUserProgress(progress);
-    setThemeUnlocks(unlocks);
+    setUserProgress(cachedProgress);
+    setThemeUnlocks(cachedUnlocks);
 
     localStorage.setItem("mathverse_user", JSON.stringify(studentUser));
     localStorage.setItem("estudiante", JSON.stringify(estudiante));
     localStorage.setItem(
       `mathverse_progress_${studentUser.id}`,
-      JSON.stringify(progress)
+      JSON.stringify(cachedProgress)
     );
     localStorage.setItem(
       `mathverse_unlocks_${studentUser.id}`,
-      JSON.stringify(unlocks)
+      JSON.stringify(cachedUnlocks)
     );
+
+    console.log(
+      `[Performance] Usuario cargado en estado local en ${(
+        performance.now() - t0
+      ).toFixed(2)} ms`
+    );
+
+    // 2. SINCRONIZACIÓN ASÍNCRONA EN SEGUNDO PLANO (NON-BLOCKING)
+    // Obtiene datos actualizados de la base de datos sin retrasar la entrada a la app
+    (async () => {
+      try {
+        const progreso = await obtenerProgreso(estudiante.id);
+        const synced = syncHeartsDaily(
+          progreso.vidas ?? 20,
+          progreso.vidas_fecha
+        );
+        const serverHearts = synced.hearts;
+        const serverProgress = progreso.detalle_niveles || cachedProgress;
+        const serverUnlocks = progreso.desbloqueos || cachedUnlocks;
+
+        // Actualización silenciosa si hay datos nuevos del servidor
+        setUser((prev) =>
+          prev ? { ...prev, hearts: serverHearts } : null
+        );
+        setUserProgress(serverProgress);
+        setThemeUnlocks(serverUnlocks);
+
+        localStorage.setItem(
+          `mathverse_progress_${estudiante.id}`,
+          JSON.stringify(serverProgress)
+        );
+        localStorage.setItem(
+          `mathverse_unlocks_${estudiante.id}`,
+          JSON.stringify(serverUnlocks)
+        );
+
+        if (progreso.diagnostico) {
+          localStorage.setItem(
+            `mathverse_diagnostic_${estudiante.id}`,
+            JSON.stringify(progreso.diagnostico)
+          );
+        }
+
+        if (
+          synced.hearts !== progreso.vidas ||
+          progreso.vidas_fecha !== synced.date
+        ) {
+          await persistProgreso(estudiante.id, {
+            vidas: serverHearts,
+            vidas_fecha: synced.date,
+            monedas: estudiante.meta_points ?? 0,
+          });
+        }
+      } catch (err) {
+        console.warn(
+          "[Performance] Sincronización secundaria en segundo plano completada con caché:",
+          err
+        );
+      }
+    })();
   };
 
   const setLoggedTeacher = (docente: any) => {
@@ -226,8 +269,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       hearts: 20,
       lastLoginDate: todayKey(),
       streakDays: 1,
-      dracoOutfits: ["default"],
-      equippedOutfit: "default",
+      dracoOutfits: ["explorador"],
+      equippedOutfit: "explorador",
     };
 
     setUser(teacherUser);
@@ -293,8 +336,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       hearts: 20,
       lastLoginDate: todayKey(),
       streakDays: 1,
-      dracoOutfits: ["default"],
-      equippedOutfit: "default",
+      dracoOutfits: ["explorador"],
+      equippedOutfit: "explorador",
       classCode: undefined,
     };
 
@@ -402,7 +445,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
         accuracy: 0,
       };
 
-    const passed = (accuracy ?? (stars >= 2 ? 80 : stars * 50)) >= 80;
+    const currentAccuracy = accuracy ?? (stars >= 2 ? 80 : stars >= 1 ? 70 : 0);
+    const passed = currentAccuracy >= PASSING_THRESHOLD; // Estricto 70% de aciertos para aprobar
 
     newProgress[categoryId][lessonId] = {
       completed: passed || existingLesson.completed,
@@ -410,7 +454,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       attempts: existingLesson.attempts + 1,
       errors: existingLesson.errors + errors,
       lastAttempt: new Date().toISOString(),
-      accuracy: Math.max(existingLesson.accuracy || 0, accuracy ?? 0),
+      accuracy: Math.max(existingLesson.accuracy || 0, currentAccuracy),
     };
 
     setUserProgress(newProgress);
@@ -419,11 +463,30 @@ export function UserProvider({ children }: { children: ReactNode }) {
       JSON.stringify(newProgress)
     );
 
+    // Sistema de desbloqueo: si se aprueba con >= 70%, se desbloquea el siguiente nivel
+    let updatedUnlocks = { ...themeUnlocks };
+    if (passed) {
+      const currentUnlocked = themeUnlocks[categoryId] ?? 1;
+      const nextLevel = Math.min(5, lessonId + 1);
+      if (nextLevel > currentUnlocked) {
+        updatedUnlocks = {
+          ...themeUnlocks,
+          [categoryId]: nextLevel,
+        };
+        setThemeUnlocks(updatedUnlocks);
+        localStorage.setItem(
+          `mathverse_unlocks_${user.id}`,
+          JSON.stringify(updatedUnlocks)
+        );
+      }
+    }
+
     const estudianteGuardado = localStorage.getItem("estudiante");
     if (estudianteGuardado && user.type === "student") {
       const estudiante = JSON.parse(estudianteGuardado);
       persistProgreso(estudiante.id, {
         detalle_niveles: newProgress,
+        desbloqueos: updatedUnlocks,
         monedas: user.metaPoints,
         vidas: user.hearts,
         vidas_fecha: todayKey(),
@@ -479,25 +542,72 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const purchaseOutfit = (outfitId: string, cost: number) => {
-    if (!user || user.metaPoints < cost) return false;
+    if (!user) return false;
+    const targetId = outfitId === "default" ? "original" : outfitId;
+    // Draco Original siempre está disponible de forma gratuita
+    if (targetId === "original") {
+      equipOutfit("original");
+      return true;
+    }
+
+    if (user.metaPoints < cost) return false;
+    if (user.dracoOutfits.includes(targetId)) return true; // Ya adquirido
+
+    const newPoints = user.metaPoints - cost;
+    const updatedOutfits = Array.from(new Set([...user.dracoOutfits, targetId]));
 
     const updatedUser = {
       ...user,
-      metaPoints: user.metaPoints - cost,
-      dracoOutfits: [...user.dracoOutfits, outfitId],
+      metaPoints: newPoints,
+      dracoOutfits: updatedOutfits,
     };
 
     setUser(updatedUser);
     localStorage.setItem("mathverse_user", JSON.stringify(updatedUser));
+    localStorage.setItem(
+      `mathverse_outfits_${user.id}`,
+      JSON.stringify(updatedOutfits)
+    );
+
+    // Persistir reducción de metapoints en el perfil del estudiante y base de datos
+    const estudianteGuardado = localStorage.getItem("estudiante");
+    if (estudianteGuardado && user.type === "student") {
+      try {
+        const estudiante = JSON.parse(estudianteGuardado);
+        estudiante.meta_points = newPoints;
+        localStorage.setItem("estudiante", JSON.stringify(estudiante));
+        persistProgreso(estudiante.id, {
+          monedas: newPoints,
+        });
+      } catch (err) {
+        console.error("Error al persistir compra en base de datos:", err);
+      }
+    }
+
     return true;
   };
 
   const equipOutfit = (outfitId: string) => {
-    if (!user || !user.dracoOutfits.includes(outfitId)) return;
+    if (!user) return;
+    const targetId = outfitId === "default" ? "original" : outfitId;
+    // El atuendo original siempre está disponible, los demás requieren compra previa
+    if (targetId !== "original" && !user.dracoOutfits.includes(targetId)) return;
 
-    const updatedUser = { ...user, equippedOutfit: outfitId };
+    const updatedUser = { ...user, equippedOutfit: targetId };
     setUser(updatedUser);
     localStorage.setItem("mathverse_user", JSON.stringify(updatedUser));
+    localStorage.setItem(`mathverse_equipped_${user.id}`, targetId);
+
+    const estudianteGuardado = localStorage.getItem("estudiante");
+    if (estudianteGuardado && user.type === "student") {
+      try {
+        const estudiante = JSON.parse(estudianteGuardado);
+        estudiante.avatar = targetId;
+        localStorage.setItem("estudiante", JSON.stringify(estudiante));
+      } catch (err) {
+        console.error("Error al persistir outfit equipado:", err);
+      }
+    }
   };
 
   const joinClass = (classCode: string) => {

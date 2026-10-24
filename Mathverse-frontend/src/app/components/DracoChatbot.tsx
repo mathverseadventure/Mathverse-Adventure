@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X, Send } from 'lucide-react';
-import dragonCharacter from '@/assets/images/draco.png';
 import API from '../../services/api';
+import { useUser } from '../utils/userContext';
+import { DracoAvatar } from './DracoAvatar';
+import { getDracoOutfit } from '../utils/dracoAvatars';
 
 interface Message {
   text: string;
@@ -16,6 +18,8 @@ interface DracoChatbotProps {
 }
 
 export function DracoChatbot({ isOpen, onClose }: DracoChatbotProps) {
+  const { user } = useUser();
+  const equippedOutfit = getDracoOutfit(user?.equippedOutfit);
   const [messages, setMessages] = useState<Message[]>([
     {
       text: '¡Hola! Soy Draco, tu asistente matemático. Solo respondo preguntas de matemáticas de quinto. ¿En qué te ayudo?',
@@ -92,9 +96,16 @@ export function DracoChatbot({ isOpen, onClose }: DracoChatbotProps) {
         >
           <div className="bg-gradient-to-r from-orange-400 to-red-500 p-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <img src={dragonCharacter} alt="Draco" className="w-14 h-14" />
+              <div className="w-14 h-14 bg-white/20 rounded-2xl p-1 flex items-center justify-center">
+                <DracoAvatar outfitId={user?.equippedOutfit} className="w-full h-full object-contain" alt="Draco" />
+              </div>
               <div>
-                <h3 className="text-white font-black text-xl">Draco</h3>
+                <h3 className="text-white font-black text-xl flex items-center gap-2">
+                  <span>{equippedOutfit.name}</span>
+                  <div className="w-6 h-6 rounded-lg bg-white/20 flex items-center justify-center text-yellow-200">
+                    <equippedOutfit.icon className="w-4 h-4" />
+                  </div>
+                </h3>
                 <p className="text-orange-100 text-sm font-semibold">Tutor de matemáticas</p>
               </div>
             </div>

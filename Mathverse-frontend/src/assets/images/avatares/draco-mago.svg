@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="magGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.4"/>
+      <stop offset="100%" stop-color="#6d28d9" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradM" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7a45"/>
+      <stop offset="50%" stop-color="#f5222d"/>
+      <stop offset="100%" stop-color="#cf1322"/>
+    </linearGradient>
+    <linearGradient id="bellyGradM" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe58f"/>
+      <stop offset="100%" stop-color="#ffd666"/>
+    </linearGradient>
+    <linearGradient id="hatGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#722ed1"/>
+      <stop offset="50%" stop-color="#531dab"/>
+      <stop offset="100%" stop-color="#22075e"/>
+    </linearGradient>
+    <linearGradient id="goldGradM" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff1b8"/>
+      <stop offset="50%" stop-color="#faad14"/>
+      <stop offset="100%" stop-color="#d48806"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Arcane Aura -->
+  <circle cx="100" cy="100" r="92" fill="url(#magGlow)"/>
+
+  <!-- Magic Sparkles Floating -->
+  <g fill="#ffd666">
+    <path d="M42 45 Q45 40 48 45 Q53 48 48 51 Q45 56 42 51 Q37 48 42 45 Z"/>
+    <path d="M160 55 Q163 50 166 55 Q171 58 166 61 Q163 66 160 61 Q155 58 160 55 Z"/>
+    <path d="M35 125 Q37 122 39 125 Q42 127 39 129 Q37 132 35 129 Q32 127 35 125 Z"/>
+  </g>
+
+  <!-- Wings -->
+  <path d="M48 95 C25 70 20 115 50 120 Z" fill="#cf1322" stroke="#fff" stroke-width="2"/>
+  <path d="M152 95 C175 70 180 115 150 120 Z" fill="#cf1322" stroke="#fff" stroke-width="2"/>
+
+  <!-- Tail -->
+  <path d="M140 145 C170 150 180 170 165 175 C150 175 140 160 135 150 Z" fill="#f5222d"/>
+  <polygon points="170,165 178,172 166,177" fill="#ffe58f"/>
+
+  <!-- Body -->
+  <ellipse cx="100" cy="130" rx="42" ry="40" fill="url(#bodyGradM)" stroke="#fff" stroke-width="2.5"/>
+  <!-- Belly -->
+  <ellipse cx="100" cy="135" rx="26" ry="26" fill="url(#bellyGradM)"/>
+  <line x1="82" y1="126" x2="118" y2="126" stroke="#d48806" stroke-width="2" stroke-linecap="round"/>
+  <line x1="80" y1="136" x2="120" y2="136" stroke="#d48806" stroke-width="2" stroke-linecap="round"/>
+  <line x1="84" y1="146" x2="116" y2="146" stroke="#d48806" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Wizard Cape -->
+  <path d="M66 112 Q100 122 134 112 L142 155 Q100 165 58 155 Z" fill="#391085" opacity="0.4"/>
+
+  <!-- Feet -->
+  <ellipse cx="78" cy="168" rx="14" ry="9" fill="#ff7a45" stroke="#fff" stroke-width="2"/>
+  <ellipse cx="122" cy="168" rx="14" ry="9" fill="#ff7a45" stroke="#fff" stroke-width="2"/>
+
+  <!-- Head -->
+  <circle cx="100" cy="80" r="38" fill="url(#bodyGradM)" stroke="#fff" stroke-width="2.5"/>
+
+  <!-- Snout / Cheeks -->
+  <ellipse cx="100" cy="94" rx="20" ry="12" fill="#ff9c6e"/>
+  <ellipse cx="74" cy="88" rx="7" ry="4" fill="#ff4d4f" opacity="0.5"/>
+  <ellipse cx="126" cy="88" rx="7" ry="4" fill="#ff4d4f" opacity="0.5"/>
+  <circle cx="95" cy="92" r="1.5" fill="#5c0011"/>
+  <circle cx="105" cy="92" r="1.5" fill="#5c0011"/>
+  <path d="M94 98 Q100 103 106 98" fill="none" stroke="#5c0011" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Big Kids Cartoon Eyes with Star Glint -->
+  <ellipse cx="86" cy="74" rx="9" ry="12" fill="#fff"/>
+  <ellipse cx="114" cy="74" rx="9" ry="12" fill="#fff"/>
+  <circle cx="88" cy="74" r="6" fill="#1f1f1f"/>
+  <circle cx="112" cy="74" r="6" fill="#1f1f1f"/>
+  <circle cx="86" cy="71" r="2.5" fill="#fff"/>
+  <circle cx="110" cy="71" r="2.5" fill="#fff"/>
+  <!-- Star Glint -->
+  <polygon points="88,76 90,78 88,80 86,78" fill="#722ed1"/>
+  <polygon points="112,76 114,78 112,80 110,78" fill="#722ed1"/>
+
+  <!-- Wizard Pointed Hat -->
+  <ellipse cx="100" cy="56" rx="48" ry="11" fill="url(#hatGrad)" stroke="#ffd666" stroke-width="2"/>
+  <path d="M64 54 C75 25 85 10 118 6 C105 20 128 35 136 54 Z" fill="url(#hatGrad)" stroke="#ffd666" stroke-width="2"/>
+  <!-- Gold Hat Band -->
+  <path d="M68 53 Q100 48 132 53" stroke="url(#goldGradM)" stroke-width="6" fill="none"/>
+  <!-- Stars on Hat -->
+  <g fill="#ffd666">
+    <polygon points="98,28 101,34 107,35 102,39 104,45 98,42 92,45 94,39 89,35 95,34"/>
+    <circle cx="116" cy="18" r="3" fill="#fff1b8"/>
+  </g>
+
+  <!-- Hands & Magic Wand -->
+  <ellipse cx="64" cy="130" rx="9" ry="7" fill="#ff7a45"/>
+  <ellipse cx="136" cy="130" rx="9" ry="7" fill="#ff7a45"/>
+
+  <!-- Magic Wand in Right Hand -->
+  <g transform="translate(138, 115) rotate(-25)">
+    <!-- Wand stick -->
+    <rect x="-3" y="0" width="6" height="42" rx="2" fill="#874d00" stroke="#d48806" stroke-width="1"/>
+    <!-- Star on tip -->
+    <g transform="translate(0, -6)">
+      <polygon points="0,-12 3.5,-3.5 12,0 3.5,3.5 0,12 -3.5,3.5 -12,0 -3.5,-3.5" fill="url(#goldGradM)" stroke="#fff" stroke-width="1.5"/>
+      <circle cx="0" cy="0" r="3" fill="#52c41a"/>
+      <!-- Glow rays -->
+      <line x1="-15" y1="-15" x2="-8" y2="-8" stroke="#13c2c2" stroke-width="2" stroke-linecap="round"/>
+      <line x1="15" y1="-15" x2="8" y2="-8" stroke="#13c2c2" stroke-width="2" stroke-linecap="round"/>
+    </g>
+  </g>
+</svg>

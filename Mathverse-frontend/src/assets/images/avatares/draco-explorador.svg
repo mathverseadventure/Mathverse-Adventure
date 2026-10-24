@@ -1,0 +1,97 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="expGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#10b981" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#059669" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7a45"/>
+      <stop offset="50%" stop-color="#f5222d"/>
+      <stop offset="100%" stop-color="#cf1322"/>
+    </linearGradient>
+    <linearGradient id="bellyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffe58f"/>
+      <stop offset="100%" stop-color="#ffd666"/>
+    </linearGradient>
+    <linearGradient id="safariGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#d4b16a"/>
+      <stop offset="100%" stop-color="#8c6b2d"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff1b8"/>
+      <stop offset="50%" stop-color="#faad14"/>
+      <stop offset="100%" stop-color="#d48806"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Aura -->
+  <circle cx="100" cy="100" r="92" fill="url(#expGlow)"/>
+
+  <!-- Wings -->
+  <path d="M48 95 C25 70 20 115 50 120 Z" fill="#cf1322" stroke="#fff" stroke-width="2"/>
+  <path d="M152 95 C175 70 180 115 150 120 Z" fill="#cf1322" stroke="#fff" stroke-width="2"/>
+
+  <!-- Tail -->
+  <path d="M140 145 C170 150 180 170 165 175 C150 175 140 160 135 150 Z" fill="#f5222d"/>
+  <polygon points="170,165 178,172 166,177" fill="#ffe58f"/>
+
+  <!-- Body -->
+  <ellipse cx="100" cy="130" rx="42" ry="40" fill="url(#bodyGrad)" stroke="#fff" stroke-width="2.5"/>
+  <!-- Belly -->
+  <ellipse cx="100" cy="135" rx="26" ry="26" fill="url(#bellyGrad)"/>
+  <line x1="82" y1="126" x2="118" y2="126" stroke="#d48806" stroke-width="2" stroke-linecap="round"/>
+  <line x1="80" y1="136" x2="120" y2="136" stroke="#d48806" stroke-width="2" stroke-linecap="round"/>
+  <line x1="84" y1="146" x2="116" y2="146" stroke="#d48806" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Explorer Vest -->
+  <path d="M72 118 Q100 125 128 118 L124 150 Q100 155 76 150 Z" fill="#a07d3b" opacity="0.35"/>
+  <rect x="76" y="128" width="12" height="14" rx="3" fill="#61471d"/>
+  <rect x="112" y="128" width="12" height="14" rx="3" fill="#61471d"/>
+
+  <!-- Feet -->
+  <ellipse cx="78" cy="168" rx="14" ry="9" fill="#ff7a45" stroke="#fff" stroke-width="2"/>
+  <ellipse cx="122" cy="168" rx="14" ry="9" fill="#ff7a45" stroke="#fff" stroke-width="2"/>
+
+  <!-- Head -->
+  <circle cx="100" cy="80" r="38" fill="url(#bodyGrad)" stroke="#fff" stroke-width="2.5"/>
+
+  <!-- Snout / Cheeks -->
+  <ellipse cx="100" cy="94" rx="20" ry="12" fill="#ff9c6e"/>
+  <ellipse cx="74" cy="88" rx="7" ry="4" fill="#ff4d4f" opacity="0.5"/>
+  <ellipse cx="126" cy="88" rx="7" ry="4" fill="#ff4d4f" opacity="0.5"/>
+  <!-- Nostrils & Smile -->
+  <circle cx="95" cy="92" r="1.5" fill="#5c0011"/>
+  <circle cx="105" cy="92" r="1.5" fill="#5c0011"/>
+  <path d="M94 98 Q100 103 106 98" fill="none" stroke="#5c0011" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Big Kids Cartoon Eyes -->
+  <ellipse cx="86" cy="74" rx="9" ry="12" fill="#fff"/>
+  <ellipse cx="114" cy="74" rx="9" ry="12" fill="#fff"/>
+  <circle cx="88" cy="74" r="6" fill="#1f1f1f"/>
+  <circle cx="112" cy="74" r="6" fill="#1f1f1f"/>
+  <circle cx="86" cy="71" r="2.5" fill="#fff"/>
+  <circle cx="110" cy="71" r="2.5" fill="#fff"/>
+
+  <!-- Safari / Explorer Hat -->
+  <ellipse cx="100" cy="54" rx="46" ry="12" fill="url(#safariGrad)" stroke="#523910" stroke-width="2"/>
+  <path d="M68 52 C68 30 132 30 132 52 Z" fill="url(#safariGrad)" stroke="#523910" stroke-width="2"/>
+  <path d="M70 51 Q100 47 130 51" stroke="#237804" stroke-width="5" fill="none"/>
+  <!-- Explorer Badge on Hat -->
+  <circle cx="100" cy="42" r="5" fill="url(#goldGrad)" stroke="#874d00" stroke-width="1"/>
+
+  <!-- Hands & Golden Compass -->
+  <ellipse cx="64" cy="130" rx="9" ry="7" fill="#ff7a45"/>
+  <ellipse cx="136" cy="130" rx="9" ry="7" fill="#ff7a45"/>
+
+  <!-- Golden Compass Badge -->
+  <g transform="translate(100, 150)">
+    <circle cx="0" cy="0" r="18" fill="url(#goldGrad)" stroke="#874d00" stroke-width="2.5"/>
+    <circle cx="0" cy="0" r="14" fill="#fff"/>
+    <!-- Compass Rose -->
+    <polygon points="0,-11 3,-2 0,0 -3,-2" fill="#cf1322"/>
+    <polygon points="0,11 3,2 0,0 -3,2" fill="#1890ff"/>
+    <polygon points="-11,0 -2,-3 0,0 -2,3" fill="#595959"/>
+    <polygon points="11,0 2,-3 0,0 2,3" fill="#595959"/>
+    <circle cx="0" cy="0" r="2" fill="#ffd666"/>
+  </g>
+</svg>

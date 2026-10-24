@@ -1,7 +1,8 @@
 import { motion } from 'motion/react';
-import { X, User, School, Mail, LogOut, Coins, Flame, Heart, Trophy, GraduationCap } from 'lucide-react';
+import { X, User, School, Mail, LogOut, Coins, Flame, Heart, Trophy, GraduationCap, Sparkles, Check } from 'lucide-react';
 import { useUser } from '../utils/userContext';
-import dragonCharacter from '@/assets/images/draco.png';
+import { DracoAvatar } from './DracoAvatar';
+import { getDracoOutfit, DRACO_OUTFITS } from '../utils/dracoAvatars';
 
 interface UserProfileProps {
   isOpen: boolean;
@@ -9,7 +10,7 @@ interface UserProfileProps {
 }
 
 export function UserProfile({ isOpen, onClose }: UserProfileProps) {
-  const { user, logout, userProgress } = useUser();
+  const { user, logout, userProgress, equipOutfit } = useUser();
 
   if (!isOpen || !user) return null;
 
@@ -103,17 +104,91 @@ export function UserProfile({ isOpen, onClose }: UserProfileProps) {
             )}
           </div>
 
-          {/* Draco Outfit */}
-          <div className="bg-gradient-to-br from-purple-100 to-pink-100 p-6 rounded-2xl border-2 border-purple-300">
-            <h3 className="text-xl font-black text-gray-800 mb-4">Mi Draco</h3>
-            <div className="flex items-center gap-4">
-              <img src={dragonCharacter} alt="Draco" className="w-24 h-24" />
-              <div>
-                <p className="text-sm font-semibold text-gray-600">Outfit Actual</p>
-                <p className="text-xl font-black text-purple-600">{user.equippedOutfit}</p>
-                <p className="text-sm text-gray-600 mt-2">
-                  {user.dracoOutfits.length} outfits desbloqueados
+          {/* Draco Outfit & Selector */}
+          <div className="bg-gradient-to-br from-purple-100 via-pink-50 to-amber-50 p-5 sm:p-6 rounded-2xl border-2 border-purple-300">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-xl font-black text-gray-800">Mi Compañero Draco</h3>
+              <span className="text-xs font-bold bg-purple-200 text-purple-800 px-2.5 py-1 rounded-full">
+                {user.dracoOutfits.length} desbloqueados
+              </span>
+            </div>
+
+            {/* Draco Actual */}
+            <div className="flex items-center gap-4 bg-white/80 p-3.5 rounded-xl border border-purple-200 mb-4 shadow-sm">
+              <div className="w-20 h-20 bg-purple-100 rounded-2xl p-1 flex items-center justify-center flex-shrink-0">
+                <DracoAvatar outfitId={user.equippedOutfit} className="w-full h-full object-contain" alt="Draco" />
+              </div>
+              <div className="flex-1">
+                <p className="text-xs font-bold text-gray-500 uppercase tracking-wider">Traje Actual en Uso</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <p className="text-xl font-black text-purple-700">
+                    {getDracoOutfit(user.equippedOutfit).name}
+                  </p>
+                  <div className="w-6 h-6 rounded-lg bg-purple-200 flex items-center justify-center text-purple-800">
+                    {(() => {
+                      const Icon = getDracoOutfit(user.equippedOutfit).icon;
+                      return <Icon className="w-4 h-4" />;
+                    })()}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-600 mt-0.5 line-clamp-1">
+                  {getDracoOutfit(user.equippedOutfit).subtitle}
                 </p>
+              </div>
+            </div>
+
+            {/* Selector Rápido de Avatares Desbloqueados */}
+            <div>
+              <p className="text-xs font-bold text-gray-600 uppercase mb-2 flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-purple-600" />
+                Cambiar de Vestuario:
+              </p>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {DRACO_OUTFITS.filter(
+                  (outfit) =>
+                    outfit.id === "original" ||
+                    outfit.id === "default" ||
+                    user.dracoOutfits.includes(outfit.id)
+                ).map((outfit) => {
+                  const isEquipped =
+                    user.equippedOutfit === outfit.id ||
+                    (outfit.id === "original" && user.equippedOutfit === "default");
+                  const OutfitIcon = outfit.icon;
+                  return (
+                    <button
+                      key={outfit.id}
+                      onClick={() => equipOutfit(outfit.id)}
+                      className={`p-2.5 rounded-xl border-2 flex items-center gap-2.5 text-left transition-all ${
+                        isEquipped
+                          ? "bg-purple-600 text-white border-purple-700 shadow-md scale-102"
+                          : "bg-white hover:bg-purple-50 text-gray-800 border-gray-200 hover:border-purple-300"
+                      }`}
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
+                        isEquipped ? "bg-white/20 text-white" : "bg-purple-100 text-purple-700"
+                      }`}>
+                        <OutfitIcon className="w-4 h-4" />
+                      </div>
+                      <div className="overflow-hidden leading-tight flex-1">
+                        <p className="text-xs font-black truncate">{outfit.name}</p>
+                        <p
+                          className={`text-[10px] font-semibold flex items-center gap-1 ${
+                            isEquipped ? "text-purple-200" : "text-gray-400"
+                          }`}
+                        >
+                          {isEquipped ? (
+                            <>
+                              <Check className="w-3 h-3 stroke-[3]" />
+                              <span>En uso</span>
+                            </>
+                          ) : (
+                            "Usar traje"
+                          )}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

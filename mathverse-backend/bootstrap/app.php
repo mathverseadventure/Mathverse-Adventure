@@ -12,8 +12,8 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function ($middleware) {
-        $middleware->trustProxies(at: '*');
-        $middleware->statefulApi();
+    $middleware->trustProxies(at: '*');
+    $middleware->statefulApi();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

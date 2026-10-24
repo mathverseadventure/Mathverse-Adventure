@@ -1,3 +1,47 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+/* ==========================================================================
+   FEEDBACK VISUAL: ESTADOS PARA CUADROS DE PREGUNTAS (DIAGNÓSTICO Y PRÁCTICA)
+   ========================================================================== */
+.cuadro-pregunta {
+  transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.3s ease;
+}
+
+/* Estado CORRECTO: El fondo del cuadro debe ponerse VERDE de forma inmediata */
+.cuadro-pregunta.correcto,
+.pregunta-contenedor.correcto {
+  background-color: #10b981 !important; /* Emerald / Verde brillante */
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 30px -5px rgba(16, 185, 129, 0.45) !important;
+}
+
+.cuadro-pregunta.correcto h1,
+.cuadro-pregunta.correcto h2,
+.cuadro-pregunta.correcto h3,
+.cuadro-pregunta.correcto p,
+.cuadro-pregunta.correcto span,
+.cuadro-pregunta.correcto label {
+  color: #ffffff !important;
+}
+
+/* Estado INCORRECTO: El fondo del cuadro debe ponerse ROJO de forma inmediata */
+.cuadro-pregunta.incorrecto,
+.pregunta-contenedor.incorrecto {
+  background-color: #ef4444 !important; /* Red / Rojo brillante */
+  border-color: #b91c1c !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 30px -5px rgba(239, 68, 68, 0.45) !important;
+}
+
+.cuadro-pregunta.incorrecto h1,
+.cuadro-pregunta.incorrecto h2,
+.cuadro-pregunta.incorrecto h3,
+.cuadro-pregunta.incorrecto p,
+.cuadro-pregunta.incorrecto span,
+.cuadro-pregunta.incorrecto label {
+  color: #ffffff !important;
+}
+

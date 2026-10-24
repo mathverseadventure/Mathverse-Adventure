@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="100%" height="100%">
+  <defs>
+    <radialGradient id="warGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#ef4444" stop-opacity="0.35"/>
+      <stop offset="100%" stop-color="#b91c1c" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="bodyGradW" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ff7a45"/>
+      <stop offset="50%" stop-color="#f5222d"/>
+      <stop offset="100%" stop-color="#cf1322"/>
+    </linearGradient>
+    <linearGradient id="armorSteel" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f5ff"/>
+      <stop offset="50%" stop-color="#adc6ff"/>
+      <stop offset="100%" stop-color="#597ef7"/>
+    </linearGradient>
+    <linearGradient id="goldGradW" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fff1b8"/>
+      <stop offset="50%" stop-color="#faad14"/>
+      <stop offset="100%" stop-color="#d48806"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Battle Aura -->
+  <circle cx="100" cy="100" r="92" fill="url(#warGlow)"/>
+
+  <!-- Wings -->
+  <path d="M48 95 C25 70 20 115 50 120 Z" fill="#cf1322" stroke="#fff" stroke-width="2"/>
+  <path d="M152 95 C175 70 180 115 150 120 Z" fill="#cf1322" stroke="#fff" stroke-width="2"/>
+
+  <!-- Tail with Spikes -->
+  <path d="M140 145 C170 150 180 170 165 175 C150 175 140 160 135 150 Z" fill="#f5222d"/>
+  <polygon points="170,165 178,172 166,177" fill="url(#goldGradW)"/>
+  <polygon points="152,152 158,157 148,160" fill="url(#goldGradW)"/>
+
+  <!-- Body -->
+  <ellipse cx="100" cy="130" rx="42" ry="40" fill="url(#bodyGradW)" stroke="#fff" stroke-width="2.5"/>
+
+  <!-- Warrior Breastplate -->
+  <path d="M74 116 Q100 120 126 116 L122 152 Q100 162 78 152 Z" fill="url(#armorSteel)" stroke="#2f54eb" stroke-width="2"/>
+  <!-- Gold Emblem on Breastplate -->
+  <circle cx="100" cy="134" r="9" fill="url(#goldGradW)" stroke="#874d00" stroke-width="1.5"/>
+  <!-- Sword emblem inside -->
+  <line x1="100" y1="128" x2="100" y2="140" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+  <line x1="96" y1="131" x2="104" y2="131" stroke="#fff" stroke-width="2" stroke-linecap="round"/>
+
+  <!-- Feet -->
+  <ellipse cx="78" cy="168" rx="14" ry="9" fill="#ff7a45" stroke="#fff" stroke-width="2"/>
+  <ellipse cx="122" cy="168" rx="14" ry="9" fill="#ff7a45" stroke="#fff" stroke-width="2"/>
+
+  <!-- Head -->
+  <circle cx="100" cy="80" r="38" fill="url(#bodyGradW)" stroke="#fff" stroke-width="2.5"/>
+
+  <!-- Snout / Cheeks -->
+  <ellipse cx="100" cy="94" rx="20" ry="12" fill="#ff9c6e"/>
+  <ellipse cx="74" cy="88" rx="7" ry="4" fill="#ff4d4f" opacity="0.5"/>
+  <ellipse cx="126" cy="88" rx="7" ry="4" fill="#ff4d4f" opacity="0.5"/>
+  <circle cx="95" cy="92" r="1.5" fill="#5c0011"/>
+  <circle cx="105" cy="92" r="1.5" fill="#5c0011"/>
+  <path d="M94 98 Q100 102 106 98" fill="none" stroke="#5c0011" stroke-width="2.5" stroke-linecap="round"/>
+
+  <!-- Eyes - Determined & heroic -->
+  <ellipse cx="86" cy="74" rx="9" ry="12" fill="#fff"/>
+  <ellipse cx="114" cy="74" rx="9" ry="12" fill="#fff"/>
+  <circle cx="88" cy="74" r="6" fill="#1f1f1f"/>
+  <circle cx="112" cy="74" r="6" fill="#1f1f1f"/>
+  <circle cx="86" cy="71" r="2.5" fill="#fff"/>
+  <circle cx="110" cy="71" r="2.5" fill="#fff"/>
+  <!-- Eyebrows -->
+  <path d="M78 63 L94 67" stroke="#874d00" stroke-width="3" stroke-linecap="round"/>
+  <path d="M122 63 L106 67" stroke="#874d00" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- Knight Helmet / Crown -->
+  <path d="M64 64 C64 36 136 36 136 64 Q100 56 64 64 Z" fill="url(#armorSteel)" stroke="#2f54eb" stroke-width="2"/>
+  <!-- Helmet Brow Guard -->
+  <path d="M62 64 Q100 58 138 64 L134 70 Q100 66 66 70 Z" fill="url(#goldGradW)" stroke="#874d00" stroke-width="1.5"/>
+  <!-- Red Plume on Helmet -->
+  <path d="M96 38 C90 15 106 8 114 18 C118 24 108 34 104 38 Z" fill="#cf1322" stroke="#fff" stroke-width="1.5"/>
+
+  <!-- Warrior Shield (Left) -->
+  <g transform="translate(48, 128)">
+    <path d="M-14 -18 Q0 -14 14 -18 L16 12 Q0 26 -16 12 Z" fill="url(#armorSteel)" stroke="url(#goldGradW)" stroke-width="3"/>
+    <circle cx="0" cy="2" r="5" fill="#cf1322"/>
+  </g>
+
+  <!-- Hands -->
+  <ellipse cx="64" cy="130" rx="9" ry="7" fill="#ff7a45"/>
+  <ellipse cx="136" cy="130" rx="9" ry="7" fill="#ff7a45"/>
+
+  <!-- Shining Sword (Right) -->
+  <g transform="translate(144, 115) rotate(22)">
+    <!-- Blade -->
+    <polygon points="0,-45 -4,0 4,0" fill="#f0f5ff" stroke="#2f54eb" stroke-width="1.5"/>
+    <line x1="0" y1="-42" x2="0" y2="0" stroke="#85a5ff" stroke-width="1.5"/>
+    <!-- Crossguard -->
+    <rect x="-11" y="0" width="22" height="5" rx="2" fill="url(#goldGradW)" stroke="#874d00" stroke-width="1"/>
+    <!-- Grip & Pommel -->
+    <rect x="-3" y="5" width="6" height="14" rx="1" fill="#595959"/>
+    <circle cx="0" cy="22" r="4" fill="url(#goldGradW)" stroke="#874d00" stroke-width="1"/>
+    <!-- Blade Shine -->
+    <polygon points="0,-36 3,-30 0,-24 -3,-30" fill="#fff"/>
+  </g>
+</svg>

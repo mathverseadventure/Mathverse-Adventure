@@ -13,12 +13,12 @@ export function initDemoData() {
         password: 'demo123',
         type: 'student',
         school: 'Colegio San José',
-        metaPoints: 150,
+        metaPoints: 350,
         hearts: 20,
         lastLoginDate: new Date().toDateString(),
         streakDays: 3,
-        dracoOutfits: ['default', 'wizard'],
-        equippedOutfit: 'wizard',
+        dracoOutfits: ['original', 'explorador'],
+        equippedOutfit: 'original',
         classCode: 'ABC123',
       },
       {
@@ -32,8 +32,8 @@ export function initDemoData() {
         hearts: 20,
         lastLoginDate: new Date().toDateString(),
         streakDays: 1,
-        dracoOutfits: ['default'],
-        equippedOutfit: 'default',
+        dracoOutfits: ['original', 'explorador'],
+        equippedOutfit: 'original',
       }
     ];
     
@@ -68,6 +68,6 @@ export function initDemoData() {
     
     localStorage.setItem('mathverse_progress_student1', JSON.stringify(demoProgress));
     
-    console.log('✅ Demo data initialized successfully!');
+    console.log('[Demo] Datos de prueba inicializados correctamente');
   }
 }

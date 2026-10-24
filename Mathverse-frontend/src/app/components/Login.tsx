@@ -4,6 +4,7 @@ import { User, GraduationCap, Mail, Lock, School, BookOpen } from 'lucide-react'
 
 import logo from "@/assets/images/logo_mathverse.png";
 import dragonCharacter from "@/assets/images/draco.png";
+import { DracoAvatar } from './DracoAvatar';
 
 import { useUser } from '../utils/userContext';
 import { iniciarSesion, registrarEstudiante } from '../../services/estudianteService';
@@ -22,31 +23,51 @@ export function Login() {
   const [edad, setEdad] = useState('');
   const [grado, setGrado] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   const { register, setLoggedStudent, setLoggedTeacher, login } = useUser();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
+
+    const loginStartTime = performance.now();
+    console.time('Login_To_Dashboard');
 
     try {
       if (isLogin) {
         const cleanEmail = email.trim().toLowerCase();
         if (userType === 'student') {
           const estudiante = await iniciarSesion(cleanEmail, password);
+          // Transición instantánea: carga caché local y sincroniza en segundo plano
           await setLoggedStudent(estudiante);
-          alert(`¡Bienvenido ${estudiante.nombre}!`);
+
+          const totalDuration = performance.now() - loginStartTime;
+          console.timeEnd('Login_To_Dashboard');
+          console.log(
+            `%c[Performance] Login estudiante completado en ${totalDuration.toFixed(
+              2
+            )} ms (Meta: <= 3000 ms)`,
+            'color: #10b981; font-weight: bold;'
+          );
           return;
         }
 
         try {
           const docente = await iniciarSesionDocente(cleanEmail, password);
           setLoggedTeacher(docente);
+          const totalDuration = performance.now() - loginStartTime;
+          console.timeEnd('Login_To_Dashboard');
+          console.log(
+            `[Performance] Login docente completado en ${totalDuration.toFixed(2)} ms`
+          );
           return;
         } catch {
           const ok = await login(cleanEmail, password, 'teacher');
           if (!ok) {
             setError('Credenciales inválidas. Verifique su correo y contraseña.');
+            setIsLoading(false);
             return;
           }
           return;
@@ -120,6 +141,8 @@ export function Login() {
       setIsLogin(true);
     } catch (err: any) {
       setError(err.message || 'Ocurrió un error.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -146,7 +169,13 @@ export function Login() {
           transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
           className="flex justify-center mb-6"
         >
-          <img src={dragonCharacter} alt="Draco" className="w-32 h-32" />
+          <div className="w-32 h-32 flex items-center justify-center">
+            <DracoAvatar
+              className="w-full h-full object-contain filter drop-shadow-xl"
+              alt="Draco"
+              showGlow={true}
+            />
+          </div>
         </motion.div>
 
         <motion.div
@@ -356,12 +385,24 @@ export function Login() {
             )}
 
             <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
+              whileHover={{ scale: isLoading ? 1 : 1.02 }}
+              whileTap={{ scale: isLoading ? 1 : 0.98 }}
+              disabled={isLoading}
               type="submit"
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white font-black text-lg shadow-lg hover:shadow-xl transition-shadow"
+              className={`w-full py-4 rounded-2xl bg-gradient-to-r from-purple-500 via-pink-500 to-orange-500 text-white font-black text-lg shadow-lg hover:shadow-xl transition-all ${
+                isLoading ? 'opacity-80 cursor-wait' : ''
+              }`}
             >
-              {isLogin ? '¡Entrar a la Aventura!' : '¡Crea una Cuenta en Mathverse Adventure!'}
+              {isLoading ? (
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-5 h-5 border-3 border-white border-t-transparent rounded-full animate-spin" />
+                  <span>Iniciando aventura...</span>
+                </div>
+              ) : isLogin ? (
+                '¡Entrar a la Aventura!'
+              ) : (
+                '¡Crea una Cuenta en Mathverse Adventure!'
+              )}
             </motion.button>
           </form>
 

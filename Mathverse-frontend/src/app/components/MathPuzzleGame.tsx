@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Clock, Trash2, Equal, Gamepad2, ClipboardList, Target, Rocket, Star, PartyPopper, Coins, RotateCcw, DoorOpen, Timer } from 'lucide-react';
 import dragonCharacter from '@/assets/images/draco.png';
 import { useUser } from '../utils/userContext';
+import { DracoAvatar } from './DracoAvatar';
 
 interface MathPuzzleGameProps {
   isOpen: boolean;
@@ -254,7 +255,13 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
             </div>
 
             <div className="text-center mb-8">
-              <img src={dragonCharacter} alt="Draco" className="w-48 h-48 mx-auto mb-6" />
+              <div className="w-44 h-44 sm:w-48 sm:h-48 mx-auto mb-6 flex items-center justify-center">
+                <DracoAvatar
+                  className="w-full h-full object-contain filter drop-shadow-xl"
+                  alt="Draco"
+                  showGlow={true}
+                />
+              </div>
               <h3 className="text-3xl font-black text-gray-800 mb-4">¿Cómo se juega?</h3>
             </div>
 
@@ -452,7 +459,13 @@ export function MathPuzzleGame({ isOpen, onClose }: MathPuzzleGameProps) {
 
         {gameState === 'finished' && (
           <div className="p-8 text-center">
-            <img src={dragonCharacter} alt="Draco" className="w-48 h-48 mx-auto mb-6" />
+            <div className="w-44 h-44 sm:w-48 sm:h-48 mx-auto mb-6 flex items-center justify-center">
+              <DracoAvatar
+                className="w-full h-full object-contain filter drop-shadow-xl"
+                alt="Draco"
+                showGlow={true}
+              />
+            </div>
 
             <h2 className="text-5xl font-black text-gray-800 mb-6 flex items-center justify-center gap-3">
               ¡Tiempo Terminado!

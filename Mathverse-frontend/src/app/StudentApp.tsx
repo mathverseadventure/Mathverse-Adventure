@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Flame, Heart, Plus, Minus, X, Divide, Zap, Calculator, Coins, Menu, Gamepad2, Lock, Star, Rocket, LogOut, User, BarChart3, Award, Trophy, ShoppingBag, Puzzle } from 'lucide-react';
+import { Flame, Heart, Plus, Minus, X, Divide, Zap, Calculator, Coins, Menu, Gamepad2, Lock, Star, Rocket, LogOut, User, Users, BarChart3, Award, Trophy, ShoppingBag, Puzzle, Bot, MessageSquare, Sparkles } from 'lucide-react';
 import logo from "@/assets/images/logo_mathverse.png";
 import dragonCharacter from "@/assets/images/draco.png";
 import { useUser, ThemeUnlocks } from './utils/userContext';
+import { isLessonUnlocked as checkLessonUnlocked, PASSING_THRESHOLD } from './utils/progressionService';
 import { DiagnosticTest } from './components/DiagnosticTest';
 import { LessonIntro } from './components/LessonIntro';
 import { ImprovedMathPractice } from './components/ImprovedMathPractice';
@@ -14,6 +15,8 @@ import { Stats } from './components/Stats';
 import { ClassManagement } from './components/ClassManagement';
 import { BadgesSystem } from './components/BadgesSystem';
 import { MathPuzzleGame } from './components/MathPuzzleGame';
+import { DracoAvatar } from './components/DracoAvatar';
+import { ParentsInfoModal } from './components/ParentsInfoModal';
 
 export function StudentApp() {
   const { user, userProgress, themeUnlocks, logout } = useUser();
@@ -27,6 +30,7 @@ export function StudentApp() {
   const [showShop, setShowShop] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const [showStats, setShowStats] = useState(false);
+  const [showParentsInfo, setShowParentsInfo] = useState(false);
   const [showClassManagement, setShowClassManagement] = useState(false);
   const [showBadges, setShowBadges] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
@@ -143,13 +147,7 @@ export function StudentApp() {
   ];
 
   const isLessonUnlocked = (categoryId: string, lessonLevel: number) => {
-    const diagUnlock = themeUnlocks[categoryId] ?? diagnosticLevel ?? 1;
-    if (lessonLevel > diagUnlock) return false;
-    if (lessonLevel === 1) return true;
-
-    const previous = userProgress[categoryId]?.[lessonLevel - 1];
-    const accuracy = previous?.accuracy ?? (previous?.stars && previous.stars >= 2 ? 80 : 0);
-    return Boolean(previous?.completed && accuracy >= 80);
+    return checkLessonUnlocked(categoryId, lessonLevel, themeUnlocks, userProgress);
   };
 
   const getLessonData = (categoryId: string, lessonId: number) => {
@@ -267,6 +265,13 @@ export function StudentApp() {
                 Estadísticas
               </button>
               <button
+                onClick={() => { setShowParentsInfo(true); setShowMenu(false); }}
+                className="w-full flex items-center gap-4 text-left px-5 py-4 rounded-xl hover:bg-emerald-50 font-bold text-lg text-gray-800 transition-colors"
+              >
+                <Users className="w-6 h-6 text-emerald-600 flex-shrink-0" />
+                Información para Padres
+              </button>
+              <button
                 onClick={() => { setShowBadges(true); setShowMenu(false); }}
                 className="w-full flex items-center gap-4 text-left px-5 py-4 rounded-xl hover:bg-indigo-50 font-bold text-lg text-gray-800 transition-colors"
               >
@@ -317,13 +322,18 @@ export function StudentApp() {
             <motion.div key="categories" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
               {/* Welcome */}
               <div className="text-center mb-12">
-                <motion.img
+                <motion.div
                   animate={{ y: [0, -15, 0] }}
                   transition={{ duration: 3, repeat: Infinity }}
-                  src={dragonCharacter}
-                  alt="Draco"
-                  className="w-56 h-56 md:w-72 md:h-72 mx-auto mb-6"
-                />
+                  className="w-56 h-56 md:w-72 md:h-72 mx-auto mb-6 flex items-center justify-center"
+                >
+                  <DracoAvatar
+                    outfitId={user.equippedOutfit}
+                    className="w-full h-full object-contain filter drop-shadow-2xl"
+                    showGlow={true}
+                    alt="Draco"
+                  />
+                </motion.div>
                 <h1 className="text-5xl md:text-7xl font-black text-white mb-4 drop-shadow-2xl">
                   ¡Hola, {user.name}! 
                 </h1>
@@ -439,10 +449,27 @@ export function StudentApp() {
                                 </div>
 
                                 {/* Lesson Title */}
-                                <div className="absolute -bottom-20 left-1/2 transform -translate-x-1/2 whitespace-nowrap">
-                                  <div className="bg-white px-6 py-3 rounded-2xl shadow-xl border-b-4 border-indigo-300">
+                                <div className="absolute -bottom-20 left-1/2 transform -translate-x-1/2 whitespace-nowrap text-center">
+                                  <div className={`px-6 py-3 rounded-2xl shadow-xl border-b-4 ${
+                                    !isUnlocked
+                                      ? "bg-gray-100 border-gray-300"
+                                      : lessonData.completed
+                                      ? "bg-emerald-50 border-emerald-300"
+                                      : "bg-white border-indigo-300"
+                                  }`}>
                                     <p className="font-black text-lg text-gray-800">{lesson.title}</p>
-                                    <p className="text-sm text-gray-600 font-bold">Nivel {lesson.level}</p>
+                                    <div className="flex items-center justify-center gap-2 mt-0.5">
+                                      <span className="text-xs text-gray-600 font-bold">Nivel {lesson.level}</span>
+                                      {!isUnlocked ? (
+                                        <span className="text-xs text-red-600 font-extrabold bg-red-100 px-2 py-0.5 rounded-full">
+                                          Bloqueado (Requiere 70% en Nivel {lesson.level - 1})
+                                        </span>
+                                      ) : lessonData.completed ? (
+                                        <span className="text-xs text-emerald-700 font-extrabold bg-emerald-100 px-2 py-0.5 rounded-full">
+                                          {lessonData.accuracy}% acierto
+                                        </span>
+                                      ) : null}
+                                    </div>
                                   </div>
                                 </div>
                               </motion.button>
@@ -459,17 +486,65 @@ export function StudentApp() {
         </AnimatePresence>
       </main>
 
-      {/* Floating Draco Chatbot */}
+      {/* Barra de Acciones Flotantes: Acceso Directo al Puzzle y Chatbot de Draco con Alta Visibilidad y Relieve 3D */}
       {!isPracticing && (
-        <motion.button
-          animate={{ y: [0, -15, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          whileHover={{ scale: 1.1 }}
-          onClick={() => setShowChatbot(true)}
-          className="fixed bottom-8 right-8 w-28 h-28 bg-gradient-to-br from-red-400 to-orange-500 rounded-full shadow-2xl border-4 border-white z-40 flex items-center justify-center"
-        >
-          <img src={dragonCharacter} alt="Draco" className="w-20 h-20" />
-        </motion.button>
+        <div className="fixed bottom-6 right-6 sm:bottom-8 sm:right-8 flex flex-col items-end gap-4 z-40 pointer-events-auto">
+          {/* Botón 1: Acceso Directo al Puzzle (Ultra visible, alto contraste, relieve 3D táctil) */}
+          <motion.button
+            whileHover={{ scale: 1.04, x: -4 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setShowPuzzleGame(true)}
+            className="w-56 sm:w-68 md:w-76 h-20 sm:h-24 bg-gradient-to-r from-violet-600 via-purple-600 to-fuchsia-600 rounded-3xl border-4 border-white shadow-[0_8px_0_#3b0764,0_16px_25px_rgba(0,0,0,0.35)] active:translate-y-1.5 active:shadow-[0_2px_0_#3b0764] flex items-center px-4 sm:px-5 gap-3.5 text-white cursor-pointer group transition-all"
+            title="Abrir Puzzle Matemático"
+          >
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/20 border-2 border-white/40 backdrop-blur-sm flex items-center justify-center shadow-inner flex-shrink-0 group-hover:scale-110 group-hover:rotate-6 transition-transform">
+              <Puzzle className="w-7 h-7 sm:w-10 sm:h-10 text-yellow-300 drop-shadow" />
+            </div>
+            <div className="flex flex-col text-left leading-tight overflow-hidden flex-1">
+              <span className="text-[10px] sm:text-xs text-pink-200 font-black uppercase tracking-wider flex items-center gap-1">
+                <Sparkles className="w-3.5 h-3.5 text-yellow-300" /> Metajuego
+              </span>
+              <span className="text-base sm:text-2xl font-black tracking-wide drop-shadow text-white uppercase">
+                Puzzle
+              </span>
+              <span className="text-[10px] sm:text-xs text-white/90 font-bold truncate">
+                Desafío mental diario
+              </span>
+            </div>
+          </motion.button>
+
+          {/* Botón 2: Acceso Directo a Draco Chatbot (Mismo ancho, altura, relieve 3D y alineación) */}
+          <motion.button
+            whileHover={{ scale: 1.04, x: -4 }}
+            whileTap={{ scale: 0.96 }}
+            onClick={() => setShowChatbot(true)}
+            className="w-56 sm:w-68 md:w-76 h-20 sm:h-24 bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 rounded-3xl border-4 border-white shadow-[0_8px_0_#7c2d12,0_16px_25px_rgba(0,0,0,0.35)] active:translate-y-1.5 active:shadow-[0_2px_0_#7c2d12] flex items-center px-4 sm:px-5 gap-3.5 text-white cursor-pointer group transition-all"
+            title="Hablar con Draco Chatbot"
+          >
+            <div className="w-12 h-12 sm:w-16 sm:h-16 rounded-2xl bg-white/20 border-2 border-white/40 backdrop-blur-sm flex items-center justify-center shadow-inner flex-shrink-0 group-hover:scale-110 transition-transform p-1 relative">
+              <DracoAvatar
+                outfitId={user?.equippedOutfit}
+                className="w-full h-full object-contain filter drop-shadow"
+                alt="Draco Chat"
+              />
+              <div className="absolute -top-1.5 -right-1.5 bg-yellow-400 text-orange-950 p-1 rounded-full shadow-md border-2 border-white">
+                <Bot className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+              </div>
+            </div>
+            <div className="flex flex-col text-left leading-tight overflow-hidden flex-1">
+              <span className="text-[10px] sm:text-xs text-yellow-200 font-black uppercase tracking-wider flex items-center gap-1">
+                <Bot className="w-3.5 h-3.5" /> Tutor IA
+              </span>
+              <span className="text-base sm:text-2xl font-black tracking-wide drop-shadow text-white uppercase flex items-center gap-1.5">
+                Draco Chat
+                <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5 text-white/90" />
+              </span>
+              <span className="text-[10px] sm:text-xs text-white/90 font-bold truncate">
+                ¿Preguntas de clase?
+              </span>
+            </div>
+          </motion.button>
+        </div>
       )}
 
       {/* Modals */}
@@ -501,6 +576,10 @@ export function StudentApp() {
 
       <AnimatePresence>
         {showStats && <Stats isOpen={showStats} onClose={() => setShowStats(false)} />}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showParentsInfo && <ParentsInfoModal isOpen={showParentsInfo} onClose={() => setShowParentsInfo(false)} />}
       </AnimatePresence>
 
       <AnimatePresence>

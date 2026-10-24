@@ -1,21 +1,35 @@
 import { useState, useEffect } from "react";
-import { motion } from "motion/react";
-import { Trophy, ArrowRight, CheckCircle, Pencil } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
+import {
+  Trophy,
+  ArrowRight,
+  CheckCircle,
+  XCircle,
+  Pencil,
+  Sparkles,
+  Award,
+} from "lucide-react";
 
 import dragonCharacter from "@/assets/images/draco.png";
 import { useUser, ThemeUnlocks } from "../utils/userContext";
 import { DrawingBoard } from "./DrawingBoard";
+import { validateAnswer, PASSING_THRESHOLD } from "../utils/progressionService";
+import { DracoAvatar } from "./DracoAvatar";
 
 interface DiagnosticTestProps {
   onComplete: (level: number, unlocks: ThemeUnlocks) => void;
 }
 
-interface Question {
+interface DiagnosticQuestion {
+  id: number;
   question: string;
   options: number[];
   correctAnswer: number;
-  category: string;
-  difficulty: number;
+  category: "suma" | "resta" | "multiplicacion" | "division" | "potencias" | "radicacion" | "polinomios";
+  categoryLabel: string;
+  type: "operacion" | "problema";
+  typeLabel: string;
+  explanation: string;
 }
 
 const THEMES = [
@@ -33,11 +47,12 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
 
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean | null>(null);
   const [themeStats, setThemeStats] = useState<Record<string, { correct: number; total: number }>>({});
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [showResult, setShowResult] = useState(false);
   const [showBoard, setShowBoard] = useState(false);
-  const [questions, setQuestions] = useState<Question[]>([]);
+  const [questions, setQuestions] = useState<DiagnosticQuestion[]>([]);
   const [finalCorrect, setFinalCorrect] = useState(0);
   const [finalThemeStats, setFinalThemeStats] = useState<Record<string, { correct: number; total: number }>>({});
 
@@ -46,115 +61,184 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
   }, []);
 
   const generateDiagnosticQuestions = () => {
-    const diagnosticQuestions: Question[] = [
+    // 14 preguntas calibradas a nivel de entrada para 5to de primaria:
+    // 2 preguntas por tema (1 cálculo directo básico + 1 problema contextualizado de texto/lógica)
+    const diagnosticQuestions: DiagnosticQuestion[] = [
+      // 1. SUMA
       {
-        question: "Calcula: 2.847 + 1.659 = ?",
-        options: [4406, 4506, 4306, 4496],
-        correctAnswer: 4506,
+        id: 1,
+        question: "Calcula: 145 + 234 = ?",
+        options: [379, 369, 389, 359],
+        correctAnswer: 379,
         category: "suma",
-        difficulty: 3,
+        categoryLabel: "Suma",
+        type: "operacion",
+        typeLabel: "Operación Directa",
+        explanation: "Sumamos unidades (5+4=9), decenas (4+3=7) y centenas (1+2=3): 379.",
       },
       {
-        question: "Una escuela tiene 1.245 estudiantes y llegan 378 nuevos. ¿Cuántos hay en total?",
-        options: [1623, 1513, 1633, 1523],
-        correctAnswer: 1623,
+        id: 2,
+        question:
+          "Lucas tiene 35 canicas rojas y su amigo le regala 24 canicas azules. ¿Cuántas canicas tiene en total?",
+        options: [59, 49, 69, 58],
+        correctAnswer: 59,
         category: "suma",
-        difficulty: 3,
+        categoryLabel: "Suma",
+        type: "problema",
+        typeLabel: "Problema de Razonamiento",
+        explanation: "Sumamos las canicas que tenía y las que le regalaron: 35 + 24 = 59 canicas.",
       },
+
+      // 2. RESTA
       {
-        question: "Calcula: 5.003 − 2.786 = ?",
-        options: [2217, 2317, 2117, 2227],
-        correctAnswer: 2217,
+        id: 3,
+        question: "Calcula: 96 − 42 = ?",
+        options: [54, 44, 64, 52],
+        correctAnswer: 54,
         category: "resta",
-        difficulty: 3,
+        categoryLabel: "Resta",
+        type: "operacion",
+        typeLabel: "Operación Directa",
+        explanation: "Restamos unidades (6-2=4) y decenas (9-4=5): 54.",
       },
       {
-        question: "Un depósito tenía 4.500 litros y se usaron 1.875. ¿Cuántos litros quedan?",
-        options: [2625, 2725, 2525, 2635],
-        correctAnswer: 2625,
+        id: 4,
+        question:
+          "En una canasta había 50 manzanas. Si se vendieron 18 manzanas en la mañana, ¿cuántas manzanas quedan?",
+        options: [32, 42, 28, 38],
+        correctAnswer: 32,
         category: "resta",
-        difficulty: 3,
+        categoryLabel: "Resta",
+        type: "problema",
+        typeLabel: "Problema de Razonamiento",
+        explanation: "Restamos las vendidas del total: 50 − 18 = 32 manzanas quedan.",
       },
+
+      // 3. MULTIPLICACIÓN
       {
-        question: "¿Cuánto es 47 × 36?",
-        options: [1692, 1592, 1792, 1682],
-        correctAnswer: 1692,
+        id: 5,
+        question: "¿Cuánto es 7 × 8?",
+        options: [56, 54, 48, 64],
+        correctAnswer: 56,
         category: "multiplicacion",
-        difficulty: 4,
+        categoryLabel: "Multiplicación",
+        type: "operacion",
+        typeLabel: "Operación Directa",
+        explanation: "7 multiplicado por 8 es igual a 56.",
       },
       {
-        question: "Hay 28 filas con 15 asientos. ¿Cuántos asientos hay?",
-        options: [420, 400, 430, 415],
-        correctAnswer: 420,
+        id: 6,
+        question:
+          "Una caja contiene 6 paquetes de galletas, y cada paquete tiene 5 galletas. ¿Cuántas galletas hay en total?",
+        options: [30, 25, 35, 36],
+        correctAnswer: 30,
         category: "multiplicacion",
-        difficulty: 3,
+        categoryLabel: "Multiplicación",
+        type: "problema",
+        typeLabel: "Problema de Razonamiento",
+        explanation: "Multiplicamos la cantidad de paquetes por las galletas de cada uno: 6 × 5 = 30 galletas.",
       },
+
+      // 4. DIVISIÓN
       {
-        question: "¿Cuánto es 1.728 ÷ 36?",
-        options: [48, 46, 52, 42],
-        correctAnswer: 48,
+        id: 7,
+        question: "¿Cuánto es 48 ÷ 6?",
+        options: [8, 7, 9, 6],
+        correctAnswer: 8,
         category: "division",
-        difficulty: 4,
+        categoryLabel: "División",
+        type: "operacion",
+        typeLabel: "Operación Directa",
+        explanation: "48 dividido en 6 partes iguales es 8, porque 6 × 8 = 48.",
       },
       {
-        question: "Se reparte 960 hojas en 24 paquetes iguales. ¿Cuántas hojas por paquete?",
-        options: [40, 35, 45, 30],
-        correctAnswer: 40,
+        id: 8,
+        question:
+          "La profesora tiene 36 lápices y desea repartirlos por igual entre 4 estudiantes. ¿Cuántos lápices recibe cada uno?",
+        options: [9, 8, 7, 6],
+        correctAnswer: 9,
         category: "division",
-        difficulty: 3,
+        categoryLabel: "División",
+        type: "problema",
+        typeLabel: "Problema de Razonamiento",
+        explanation: "Dividimos los lápices entre los 4 estudiantes: 36 ÷ 4 = 9 lápices por estudiante.",
       },
+
+      // 5. POTENCIAS
       {
-        question: "¿Cuánto es 8² + 5³?",
-        options: [189, 169, 199, 179],
-        correctAnswer: 189,
+        id: 9,
+        question: "¿Cuánto es 5² (5 elevado al cuadrado)?",
+        options: [25, 10, 15, 20],
+        correctAnswer: 25,
         category: "potencias",
-        difficulty: 4,
+        categoryLabel: "Potencias",
+        type: "operacion",
+        typeLabel: "Operación Directa",
+        explanation: "5² significa multiplicar 5 por sí mismo: 5 × 5 = 25.",
       },
       {
-        question: "Calcula 10³ − 6².",
-        options: [964, 940, 1000, 936],
-        correctAnswer: 964,
+        id: 10,
+        question:
+          "Un piso cuadrado tiene 4 baldosas de largo y 4 de ancho (4²). ¿Cuántas baldosas tiene en total?",
+        options: [16, 8, 12, 20],
+        correctAnswer: 16,
         category: "potencias",
-        difficulty: 4,
+        categoryLabel: "Potencias",
+        type: "problema",
+        typeLabel: "Problema de Razonamiento",
+        explanation: "El total de baldosas es 4² = 4 × 4 = 16 baldosas.",
       },
+
+      // 6. RADICACIÓN
       {
-        question: "¿Cuál es √196?",
-        options: [14, 12, 16, 13],
-        correctAnswer: 14,
-        category: "radicacion",
-        difficulty: 3,
-      },
-      {
-        question: "Si √x = 15, ¿cuánto vale x?",
-        options: [225, 215, 30, 150],
-        correctAnswer: 225,
-        category: "radicacion",
-        difficulty: 3,
-      },
-      {
-        question: "Simplifica: (3x + 5) + (2x − 1)",
-        options: [5, 4, 6, 7],
-        correctAnswer: 5,
-        category: "polinomios",
-        difficulty: 3,
-      },
-      {
-        question: "Si 4a + 7 = 31, ¿cuánto vale a?",
+        id: 11,
+        question: "¿Cuál es la raíz cuadrada de 36 (√36)?",
         options: [6, 5, 7, 8],
         correctAnswer: 6,
+        category: "radicacion",
+        categoryLabel: "Radicación",
+        type: "operacion",
+        typeLabel: "Operación Directa",
+        explanation: "√36 = 6 porque 6 × 6 = 36.",
+      },
+      {
+        id: 12,
+        question:
+          "Un jardín cuadrado tiene un área total de 49 metros cuadrados. ¿Cuánto mide cada uno de sus lados? (Calcula √49)",
+        options: [7, 6, 8, 9],
+        correctAnswer: 7,
+        category: "radicacion",
+        categoryLabel: "Radicación",
+        type: "problema",
+        typeLabel: "Problema de Razonamiento",
+        explanation: "El lado de una superficie cuadrada de 49 m² es su raíz: √49 = 7 metros.",
+      },
+
+      // 7. POLINOMIOS
+      {
+        id: 13,
+        question: "Si el valor de la variable x es 4, ¿cuánto resulta x + 8?",
+        options: [12, 10, 14, 32],
+        correctAnswer: 12,
         category: "polinomios",
-        difficulty: 4,
+        categoryLabel: "Polinomios",
+        type: "operacion",
+        typeLabel: "Operación Directa",
+        explanation: "Sustituimos x por 4: 4 + 8 = 12.",
+      },
+      {
+        id: 14,
+        question:
+          "Un número desconocido 'n' sumado con 7 es igual a 20 (n + 7 = 20). ¿Cuál es el valor del número n?",
+        options: [13, 14, 12, 11],
+        correctAnswer: 13,
+        category: "polinomios",
+        categoryLabel: "Polinomios",
+        type: "problema",
+        typeLabel: "Problema de Razonamiento",
+        explanation: "Para hallar n restamos 20 − 7 = 13. Por lo tanto, n = 13.",
       },
     ];
-
-    // Nota: para polinomios usamos el coeficiente resultante 5x+4 -> pedimos coeficiente de x = 5
-    diagnosticQuestions[12] = {
-      question: "En (3x + 5) + (2x − 1), ¿cuál es el coeficiente de x?",
-      options: [5, 4, 6, 3],
-      correctAnswer: 5,
-      category: "polinomios",
-      difficulty: 3,
-    };
 
     setQuestions(diagnosticQuestions);
 
@@ -170,29 +254,52 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
   };
 
   const handleAnswer = (answer: number) => {
+    // Si ya respondió, evitar clics adicionales mientras se muestra el feedback
     if (selectedAnswer !== null) return;
-    setSelectedAnswer(answer);
 
     const q = questions[currentQuestion];
-    const isCorrect = answer === q.correctAnswer;
-    const nextCorrect = correctAnswers + (isCorrect ? 1 : 0);
+    const validation = validateAnswer(answer, q.correctAnswer);
 
+    setSelectedAnswer(answer);
+    setIsAnswerCorrect(validation.isCorrect);
+
+    const nextCorrect = correctAnswers + (validation.isCorrect ? 1 : 0);
     const nextThemeStats = { ...themeStats };
     const theme = nextThemeStats[q.category] || { correct: 0, total: 0 };
     nextThemeStats[q.category] = {
       ...theme,
-      correct: theme.correct + (isCorrect ? 1 : 0),
+      correct: theme.correct + (validation.isCorrect ? 1 : 0),
     };
 
     setThemeStats(nextThemeStats);
     setCorrectAnswers(nextCorrect);
 
+    const transitionStart = performance.now();
+
+    // Transición rápida (380 ms): muestra el cuadro verde/rojo pero avanza de inmediato
+    setTimeout(() => {
+      goToNextQuestion(nextCorrect, nextThemeStats);
+      const elapsed = performance.now() - transitionStart;
+      console.log(
+        `%c[Performance] Diagnóstico: pregunta ${currentQuestion + 1} avanzada en ${elapsed.toFixed(
+          2
+        )} ms (Meta: <= 400 ms)`,
+        validation.isCorrect ? 'color: #10b981;' : 'color: #ef4444;'
+      );
+    }, 380);
+  };
+
+  const goToNextQuestion = (
+    currentCorrectCount: number,
+    currentThemeStats: Record<string, { correct: number; total: number }>
+  ) => {
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
       setSelectedAnswer(null);
+      setIsAnswerCorrect(null);
     } else {
-      setFinalCorrect(nextCorrect);
-      setFinalThemeStats(nextThemeStats);
+      setFinalCorrect(currentCorrectCount);
+      setFinalThemeStats(currentThemeStats);
       setShowResult(true);
     }
   };
@@ -201,18 +308,20 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
     score: number,
     stats: Record<string, { correct: number; total: number }>
   ): ThemeUnlocks => {
-    const percentage = (score / questions.length) * 100;
-    const globalLevels = Math.max(1, Math.ceil((percentage / 100) * 5));
     const unlocks: ThemeUnlocks = {};
 
     THEMES.forEach((theme) => {
       const themeData = stats[theme];
       if (themeData && themeData.total > 0) {
         const themePct = (themeData.correct / themeData.total) * 100;
-        const blended = (themePct + percentage) / 2;
-        unlocks[theme] = Math.max(1, Math.min(5, Math.ceil((blended / 100) * 5)));
+        // Regla del 70%: si aprueba con 70% o más en el tema, desbloquea nivel 2
+        if (themePct >= PASSING_THRESHOLD) {
+          unlocks[theme] = 2;
+        } else {
+          unlocks[theme] = 1;
+        }
       } else {
-        unlocks[theme] = globalLevels;
+        unlocks[theme] = 1;
       }
     });
 
@@ -220,12 +329,14 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
   };
 
   const handleComplete = () => {
-    const percentage = Math.round((finalCorrect / questions.length) * 100);
+    const totalCount = questions.length;
+    const percentage = totalCount > 0 ? Math.round((finalCorrect / totalCount) * 100) : 0;
     const unlocks = buildUnlocks(finalCorrect, finalThemeStats);
-    const level = Math.max(1, Math.ceil((percentage / 100) * 5));
+    // Nivel global asignado a partir del umbral del 70%
+    const level = percentage >= PASSING_THRESHOLD ? 2 : 1;
 
     if (user) {
-      saveDiagnosticResult(percentage, finalCorrect, questions.length, unlocks);
+      saveDiagnosticResult(percentage, finalCorrect, totalCount, unlocks);
     }
 
     localStorage.setItem("diagnostico_completado", "true");
@@ -235,35 +346,88 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
   if (questions.length === 0) return null;
 
   if (showResult) {
-    const percentage = Math.round((finalCorrect / questions.length) * 100);
+    const totalCount = questions.length;
+    const percentage = Math.round((finalCorrect / totalCount) * 100);
     const unlocks = buildUnlocks(finalCorrect, finalThemeStats);
 
     return (
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-400 via-pink-300 to-yellow-300 flex items-center justify-center p-4 z-50">
+      <div className="fixed inset-0 bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4 z-50 overflow-y-auto">
         <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
+          initial={{ scale: 0.85, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full text-center"
+          transition={{ type: "spring", duration: 0.5 }}
+          className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-xl w-full text-center my-8"
         >
-          <img src={dragonCharacter} alt="Draco" className="w-28 h-28 mx-auto mb-4" />
-          <Trophy className="w-12 h-12 text-yellow-500 mx-auto mb-3" />
-          <h2 className="text-3xl font-black text-gray-800 mb-2">¡Prueba completada!</h2>
-          <p className="text-xl font-bold text-indigo-600 mb-4">{percentage}% de aciertos</p>
-          <p className="text-gray-600 font-semibold mb-4">
-            Se desbloquean niveles por tema según tu resultado (ejemplo: 50% ≈ mitad de niveles).
-          </p>
-          <div className="grid grid-cols-2 gap-2 text-left mb-6">
-            {Object.entries(unlocks).map(([theme, lvl]) => (
-              <div key={theme} className="bg-indigo-50 rounded-xl px-3 py-2 text-sm font-bold text-indigo-800">
-                {theme}: hasta nivel {lvl}
-              </div>
-            ))}
+          <div className="w-24 h-24 sm:w-28 sm:h-28 mx-auto mb-3 flex items-center justify-center">
+            <DracoAvatar
+              className="w-full h-full object-contain filter drop-shadow-lg"
+              alt="Draco"
+              showGlow={true}
+            />
           </div>
+          <div className="flex items-center justify-center gap-2 mb-2">
+            <Trophy className="w-10 h-10 text-yellow-500 fill-yellow-400" />
+            <h2 className="text-3xl sm:text-4xl font-black text-gray-800">
+              ¡Prueba Diagnóstica Lista!
+            </h2>
+          </div>
+
+          <div className="bg-indigo-50 rounded-2xl p-4 mb-4">
+            <p className="text-3xl font-black text-indigo-700">
+              {percentage}% de Aciertos
+            </p>
+            <p className="text-sm font-bold text-gray-600 mt-1">
+              ({finalCorrect} de {totalCount} preguntas correctas)
+            </p>
+          </div>
+
+          <p className="text-gray-700 font-semibold text-sm sm:text-base mb-4 leading-relaxed">
+            Hemos evaluado tus conocimientos en los 7 temas matemáticos.
+            <br />
+            <span className="font-bold text-indigo-600">
+              ¡Recuerda que con 70% o más de aciertos en cada nivel desbloqueas el siguiente!
+            </span>
+          </p>
+
+          {/* Resumen por tema */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left mb-6 max-h-56 overflow-y-auto p-1">
+            {THEMES.map((theme) => {
+              const themeData = finalThemeStats[theme] || { correct: 0, total: 2 };
+              const themePct = Math.round((themeData.correct / themeData.total) * 100);
+              const unlockedLevel = unlocks[theme] || 1;
+              const passed = themePct >= PASSING_THRESHOLD;
+
+              return (
+                <div
+                  key={theme}
+                  className={`rounded-xl p-3 border-2 transition ${
+                    passed
+                      ? "bg-emerald-50 border-emerald-300 text-emerald-900"
+                      : "bg-indigo-50 border-indigo-200 text-indigo-900"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-black capitalize">{theme}</span>
+                    <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-white/80">
+                      {themeData.correct}/{themeData.total} ({themePct}%)
+                    </span>
+                  </div>
+                  <p className="text-xs font-semibold mt-1 flex items-center gap-1">
+                    <Award className="w-3.5 h-3.5" />
+                    Nivel inicial:{" "}
+                    <strong className="font-black">Nivel {unlockedLevel}</strong>
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
           <button
+            type="button"
             onClick={handleComplete}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-black text-lg flex items-center justify-center gap-2"
+            className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-600 to-indigo-600 hover:from-emerald-600 hover:to-indigo-700 text-white font-black text-xl shadow-xl transition-all transform hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
           >
-            Continuar aventura <ArrowRight className="w-5 h-5" />
+            <Sparkles className="w-6 h-6" /> ¡Comenzar mi Aventura! <ArrowRight className="w-6 h-6" />
           </button>
         </motion.div>
       </div>
@@ -271,55 +435,184 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
   }
 
   const q = questions[currentQuestion];
+  const progressPercent = Math.round(((currentQuestion + 1) / questions.length) * 100);
+
+  // Determinación de clases de retroalimentación visual para el contenedor de la pregunta
+  const feedbackClass =
+    isAnswerCorrect === null
+      ? "bg-white border-2 border-indigo-100"
+      : isAnswerCorrect
+      ? "correcto bg-emerald-500 border-4 border-emerald-600 text-white shadow-2xl ring-4 ring-emerald-300/50"
+      : "incorrecto bg-red-500 border-4 border-red-600 text-white shadow-2xl ring-4 ring-red-300/50";
 
   return (
-    <div className="fixed inset-0 bg-gradient-to-br from-indigo-400 via-purple-300 to-pink-300 z-50 overflow-y-auto">
-      <div className="max-w-3xl mx-auto p-4 py-8">
+    <div className="fixed inset-0 bg-gradient-to-br from-indigo-500 via-purple-400 to-pink-400 z-50 overflow-y-auto">
+      <div className="max-w-3xl mx-auto p-4 py-6 sm:py-8">
+        {/* Cabecera con Draco y Progreso */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <img src={dragonCharacter} alt="Draco" className="w-16 h-16" />
+            <motion.div
+              animate={{ y: [0, -6, 0] }}
+              transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+              className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0"
+            >
+              <DracoAvatar
+                className="w-full h-full object-contain filter drop-shadow"
+                alt="Draco"
+              />
+            </motion.div>
             <div>
-              <h1 className="text-2xl font-black text-white drop-shadow">Prueba diagnóstica</h1>
-              <p className="text-white/90 font-bold">
-                Pregunta {currentQuestion + 1} de {questions.length}
+              <h1 className="text-xl sm:text-2xl font-black text-white drop-shadow">
+                Prueba Diagnóstica
+              </h1>
+              <p className="text-white/90 font-bold text-sm">
+                Pregunta {currentQuestion + 1} de {questions.length} • {q.categoryLabel}
               </p>
             </div>
           </div>
+
           <button
             type="button"
             onClick={() => setShowBoard((v) => !v)}
-            className="bg-white px-4 py-2 rounded-xl font-bold flex items-center gap-2 shadow"
+            className="bg-white/95 hover:bg-white text-indigo-900 px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-lg transition"
           >
-            <Pencil className="w-4 h-4" /> Tablero
+            <Pencil className="w-4 h-4 text-indigo-600" />
+            <span className="hidden sm:inline">Pizarra / Tablero</span>
           </button>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-2xl p-6 mb-4">
-          <p className="text-xl font-black text-gray-800 mb-6">{q.question}</p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {q.options.map((opt) => (
-              <button
-                key={opt}
-                type="button"
-                onClick={() => handleAnswer(opt)}
-                className={`py-4 px-4 rounded-2xl font-black text-lg border-b-4 transition ${
-                  selectedAnswer === opt
-                    ? "bg-indigo-500 text-white border-indigo-700"
-                    : "bg-indigo-50 text-indigo-900 border-indigo-200 hover:bg-indigo-100"
-                }`}
-              >
-                {opt}
-              </button>
-            ))}
-          </div>
-          {selectedAnswer !== null && (
-            <div className="mt-4 flex items-center gap-2 text-green-700 font-bold">
-              <CheckCircle className="w-5 h-5" /> Respuesta registrada
-            </div>
-          )}
+        {/* Barra de progreso */}
+        <div className="w-full bg-white/30 rounded-full h-3 mb-6 overflow-hidden">
+          <motion.div
+            className="bg-yellow-400 h-full rounded-full transition-all duration-300"
+            initial={{ width: 0 }}
+            animate={{ width: `${progressPercent}%` }}
+          />
         </div>
 
-        {showBoard && <DrawingBoard height={500} />}
+        {/* CONTENEDOR / CUADRO DE LA PREGUNTA
+            CRÍTICO: Cambia de color inmediatamente.
+            VERDE (.correcto) si es acertada, ROJO (.incorrecto) si es fallida. */}
+        <motion.div
+          key={q.id}
+          initial={{ scale: 0.96, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className={`cuadro-pregunta rounded-3xl p-6 sm:p-8 mb-4 transition-all duration-300 ${feedbackClass}`}
+        >
+          {/* Etiquetas de Categoría y Tipo de Ejercicio */}
+          <div className="flex flex-wrap items-center gap-2 mb-4">
+            <span
+              className={`text-xs font-black uppercase tracking-wider px-3 py-1 rounded-full ${
+                isAnswerCorrect === null
+                  ? "bg-indigo-100 text-indigo-800"
+                  : "bg-white/30 text-white"
+              }`}
+            >
+              {q.categoryLabel}
+            </span>
+            <span
+              className={`text-xs font-bold px-3 py-1 rounded-full ${
+                isAnswerCorrect === null
+                  ? "bg-purple-100 text-purple-800"
+                  : "bg-white/20 text-white"
+              }`}
+            >
+              {q.typeLabel}
+            </span>
+          </div>
+
+          {/* Enunciado de la Pregunta */}
+          <p
+            className={`text-xl sm:text-2xl font-black mb-6 leading-relaxed ${
+              isAnswerCorrect === null ? "text-gray-800" : "text-white"
+            }`}
+          >
+            {q.question}
+          </p>
+
+          {/* Opciones de respuesta */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {q.options.map((opt) => {
+              const isSelected = selectedAnswer === opt;
+              const isThisCorrect = opt === q.correctAnswer;
+
+              let buttonStyles = "bg-indigo-50 text-indigo-900 border-indigo-200 hover:bg-indigo-100";
+
+              if (selectedAnswer !== null) {
+                if (isSelected) {
+                  buttonStyles = isThisCorrect
+                    ? "bg-emerald-600 text-white border-emerald-800 scale-102 shadow-xl ring-4 ring-white"
+                    : "bg-red-600 text-white border-red-800 scale-102 shadow-xl ring-4 ring-white";
+                } else if (isThisCorrect) {
+                  // Destacar la correcta si el usuario erró
+                  buttonStyles = "bg-emerald-600/90 text-white border-emerald-800 ring-2 ring-white";
+                } else {
+                  buttonStyles = "opacity-50 bg-white/30 text-white border-transparent";
+                }
+              }
+
+              return (
+                <button
+                  key={opt}
+                  type="button"
+                  disabled={selectedAnswer !== null}
+                  onClick={() => handleAnswer(opt)}
+                  className={`py-4 px-6 rounded-2xl font-black text-xl border-b-4 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 ${buttonStyles}`}
+                >
+                  {opt}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* FEEDBACK INMEDIATO AL RESPONDER */}
+          <AnimatePresence>
+            {isAnswerCorrect !== null && (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className={`mt-6 p-4 rounded-2xl flex items-center justify-between flex-wrap gap-2 ${
+                  isAnswerCorrect
+                    ? "bg-white/20 text-white border-2 border-white/40"
+                    : "bg-white/20 text-white border-2 border-white/40"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  {isAnswerCorrect ? (
+                    <CheckCircle className="w-7 h-7 text-white fill-emerald-600 flex-shrink-0" />
+                  ) : (
+                    <XCircle className="w-7 h-7 text-white fill-red-600 flex-shrink-0" />
+                  )}
+                  <div>
+                    <p className="text-lg font-black text-white">
+                      {isAnswerCorrect
+                        ? "¡Correcto! ¡Excelente trabajo!"
+                        : `¡Incorrecto! La respuesta correcta era: ${q.correctAnswer}`}
+                    </p>
+                    <p className="text-xs sm:text-sm text-white/90 font-medium">
+                      {q.explanation}
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => goToNextQuestion(correctAnswers, themeStats)}
+                  className="bg-white text-indigo-900 px-4 py-2 rounded-xl font-black text-sm flex items-center gap-1.5 shadow hover:bg-white/90 transition ml-auto"
+                >
+                  Siguiente <ArrowRight className="w-4 h-4" />
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </motion.div>
+
+        {showBoard && (
+          <div className="mt-4">
+            <DrawingBoard height={450} />
+          </div>
+        )}
       </div>
     </div>
   );

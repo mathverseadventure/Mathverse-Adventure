@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Users, Plus, Zap, TrendingUp, AlertCircle, FileText, Trophy, LogOut, Search, Lightbulb, BookOpen, Target } from 'lucide-react';
 import { useUser } from '../utils/userContext';
-import dragonCharacter from '@/assets/images/draco.png';
+import { DracoAvatar } from './DracoAvatar';
 
 interface Student {
   id: string;
@@ -165,7 +165,9 @@ export function TeacherDashboard() {
       <header className="bg-white border-b-4 border-indigo-300 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <img src={dragonCharacter} alt="Draco" className="w-16 h-16" />
+            <div className="w-16 h-16 flex items-center justify-center">
+              <DracoAvatar className="w-full h-full object-contain filter drop-shadow" alt="Draco" />
+            </div>
             <div>
               <h1 className="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">
                 Panel del Docente

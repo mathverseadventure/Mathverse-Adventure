@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Star, Heart, Trophy, ArrowLeft, Sparkles } from 'lucide-react';
-import dragonCharacter from '@/assets/images/draco.png';
+import { DracoAvatar } from './DracoAvatar';
 
 interface MathProblem {
   question: string;
@@ -230,12 +230,12 @@ export function MathPractice({ category, onBack, onPointsEarned }: MathPracticeP
                 repeat: isCorrect !== null ? 0 : Infinity,
                 ease: 'easeInOut'
               }}
-              className="mb-6"
+              className="mb-6 w-64 h-64 mx-auto flex items-center justify-center"
             >
-              <img 
-                src={dragonCharacter} 
-                alt="Draco" 
-                className="w-64 h-64 mx-auto"
+              <DracoAvatar 
+                className="w-full h-full object-contain filter drop-shadow-xl" 
+                alt="Draco"
+                showGlow={isCorrect === true}
               />
             </motion.div>
 

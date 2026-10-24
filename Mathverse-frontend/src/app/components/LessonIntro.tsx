@@ -1,6 +1,6 @@
 import { motion } from 'motion/react';
 import { BookOpen, Play, X, Flame, Lightbulb, Star, Check } from 'lucide-react';
-import dragonCharacter from '@/assets/images/draco.png';
+import { DracoAvatar } from './DracoAvatar';
 
 interface LessonIntroProps {
   category: string;
@@ -132,13 +132,17 @@ export function LessonIntro({ category, lessonTitle, onStart, onClose }: LessonI
         <div className="p-6 space-y-6">
           {/* Dragon Intro */}
           <div className="flex items-start gap-4 bg-gradient-to-br from-purple-50 to-pink-50 p-6 rounded-2xl border-2 border-purple-200">
-            <motion.img
+            <motion.div
               animate={{ rotate: [-5, 5, -5] }}
               transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-              src={dragonCharacter}
-              alt="Draco"
-              className="w-24 h-24 flex-shrink-0"
-            />
+              className="w-24 h-24 flex-shrink-0 flex items-center justify-center"
+            >
+              <DracoAvatar
+                className="w-full h-full object-contain filter drop-shadow"
+                alt="Draco"
+                showGlow={true}
+              />
+            </motion.div>
             <div>
               <p className="text-lg font-bold text-gray-800 mb-2 flex items-center gap-2">
                 ¡Hola, aventurero! Soy Draco

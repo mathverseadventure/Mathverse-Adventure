@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Trophy, ArrowLeft, Sparkles, Coins, Lightbulb, Pencil } from 'lucide-react';
+import { Heart, Trophy, ArrowLeft, Sparkles, Coins, Lightbulb, Pencil, RotateCcw, PartyPopper } from 'lucide-react';
 import dragonCharacter from "@/assets/images/draco.png";
 import { useUser } from '../utils/userContext';
 import { DrawingBoard } from './DrawingBoard';
+import { PASSING_THRESHOLD, calculateStars } from '../utils/progressionService';
+import { DracoAvatar } from './DracoAvatar';
 
 interface MathProblem {
   question: string;
@@ -186,6 +188,7 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
   const handleAnswer = async (answer: number) => {
     if (selectedAnswer !== null || !currentProblem) return;
 
+    const transitionStart = performance.now();
     setSelectedAnswer(answer);
     const correct = answer === currentProblem.correctAnswer;
     setIsCorrect(correct);
@@ -198,20 +201,22 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
       explanation: currentProblem.explanation,
     };
 
-    setAttemptHistory([...attemptHistory, attempt]);
+    const nextAttemptHistory = [...attemptHistory, attempt];
+    setAttemptHistory(nextAttemptHistory);
 
     if (correct) {
       const earnedPoints = 10 + streak * 2;
 
+      // Actualización inmediata del estado local (0 ms de bloqueo)
       setMetaPoints((prev) => prev + earnedPoints);
       setStreak((prev) => prev + 1);
       setShowConfetti(true);
 
-      try {
-        await updateMetaPoints(earnedPoints);
-      } catch (error) {
-        console.error("Error al guardar META Points:", error);
-      }
+      // Sincronización en segundo plano sin await (fire-and-forget)
+      // Evita retrasos de red que antes frenaban la transición de preguntas correctas
+      updateMetaPoints(earnedPoints).catch((error) => {
+        console.warn("[Performance] Error al guardar META Points en segundo plano:", error);
+      });
 
       const messages = [
         "¡Excelente!",
@@ -233,14 +238,26 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
 
     setQuestionsAnswered((prev) => prev + 1);
 
+    // TRANSICIÓN RÁPIDA Y CONCURRENTE (350 ms)
+    // Permite que el niño perciba el cuadro verde/rojo pero avanza inmediatamente
+    const TRANSITION_DELAY_MS = 350;
+
     setTimeout(() => {
       setSelectedAnswer(null);
       setIsCorrect(null);
       setShowConfetti(false);
 
-      const nuevasPreguntas = questionsAnswered + 1;
-      const nuevosErrores = errors + (!correct ? 1 : 0);
+      const nuevasPreguntas = nextAttemptHistory.length;
+      const nuevosErrores = nextAttemptHistory.filter((a) => !a.isCorrect).length;
       const nuevosCorazones = hearts - (!correct ? 1 : 0);
+
+      const transitionElapsed = performance.now() - transitionStart;
+      console.log(
+        `%c[Performance] Transición de pregunta (${correct ? 'CORRECTA' : 'INCORRECTA'}) completada en ${transitionElapsed.toFixed(
+          2
+        )} ms (Meta: <= 400 ms)`,
+        correct ? 'color: #10b981; font-weight: bold;' : 'color: #ef4444; font-weight: bold;'
+      );
 
       if (nuevosCorazones <= 0) {
         updateHearts(0);
@@ -252,23 +269,19 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
         nuevasPreguntas >= MAX_QUESTIONS ||
         nuevosErrores >= MAX_ERRORS
       ) {
-        finishPractice();
+        finishPractice(nextAttemptHistory);
       } else {
         setCurrentProblem(generateProblem());
         setDragonMessage("¡Vamos! ¡Tú puedes!");
       }
-    }, 2000);
+    }, TRANSITION_DELAY_MS);
   };
 
-  const finishPractice = () => {
-    const correctAnswers = attemptHistory.filter(a => a.isCorrect).length + (isCorrect ? 1 : 0);
-    const totalQuestions = questionsAnswered + 1;
-    const accuracy = (correctAnswers / totalQuestions) * 100;
-
-    let stars = 0;
-    if (accuracy >= 90) stars = 3;
-    else if (accuracy >= 80) stars = 2;
-    else if (accuracy >= 60) stars = 1;
+  const finishPractice = (finalAttempts: AttemptRecord[] = attemptHistory) => {
+    const correctAnswers = finalAttempts.filter((a) => a.isCorrect).length;
+    const totalQuestions = finalAttempts.length;
+    const accuracy = totalQuestions > 0 ? Math.round((correctAnswers / totalQuestions) * 100) : 0;
+    const stars = calculateStars(accuracy);
 
     updateHearts(hearts);
 
@@ -276,11 +289,26 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
       category,
       lessonId,
       stars,
-      errors + (isCorrect === false ? 1 : 0),
+      finalAttempts.filter((a) => !a.isCorrect).length,
       accuracy
     );
 
     setShowResults(true);
+  };
+
+  const resetPractice = () => {
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setMetaPoints(0);
+    setStreak(0);
+    setQuestionsAnswered(0);
+    setErrors(0);
+    setShowConfetti(false);
+    setAttemptHistory([]);
+    setShowResults(false);
+    setShowTiredDraco(false);
+    setCurrentProblem(generateProblem());
+    setDragonMessage("¡Vamos! ¡Tú puedes!");
   };
 
   if (!currentProblem || !user) return null;
@@ -293,13 +321,16 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
           animate={{ scale: 1, opacity: 1 }}
           className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full text-center"
         >
-          <motion.img
+          <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            src={dragonCharacter}
-            alt="Draco"
-            className="w-40 h-40 mx-auto mb-6"
-          />
+            className="w-40 h-40 mx-auto mb-6 flex items-center justify-center"
+          >
+            <DracoAvatar
+              className="w-full h-full object-contain filter drop-shadow-md"
+              alt="Draco"
+            />
+          </motion.div>
           <p className="text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
             Estoy cansado, necesito recuperar mi energía, mañana seguiremos en la aventura, tú también descansa.
           </p>
@@ -319,12 +350,10 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
   if (showResults) {
     const correctAnswers = attemptHistory.filter(a => a.isCorrect).length;
     const incorrectAttempts = attemptHistory.filter(a => !a.isCorrect);
-    const accuracy = (correctAnswers / attemptHistory.length) * 100;
-
-    let stars = 0;
-    if (accuracy >= 90) stars = 3;
-    else if (accuracy >= 80) stars = 2;
-    else if (accuracy >= 60) stars = 1;
+    const totalAttempts = attemptHistory.length;
+    const accuracy = totalAttempts > 0 ? Math.round((correctAnswers / totalAttempts) * 100) : 0;
+    const passed = accuracy >= PASSING_THRESHOLD;
+    const stars = calculateStars(accuracy);
 
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8">
@@ -336,13 +365,17 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
           >
             {/* Header */}
             <div className="text-center mb-8">
-              <motion.img
+              <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 1, repeat: Infinity }}
-                src={dragonCharacter}
-                alt="Draco"
-                className="w-32 h-32 mx-auto mb-4"
-              />
+                className="w-32 h-32 mx-auto mb-4 flex items-center justify-center"
+              >
+                <DracoAvatar
+                  className="w-full h-full object-contain filter drop-shadow-lg"
+                  alt="Draco"
+                  showGlow={true}
+                />
+              </motion.div>
               <h1 className="text-4xl font-black text-gray-800 mb-2">
                 ¡Práctica Completada!
               </h1>
@@ -357,9 +390,33 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
                 ))}
               </div>
               <p className="text-2xl font-bold text-purple-600">
-                {correctAnswers} de {attemptHistory.length} correctas ({Math.round(accuracy)}%)
+                {correctAnswers} de {totalAttempts} correctas ({accuracy}%)
               </p>
             </div>
+
+            {/* Banner de Estado de Aprobación según Regla del 70% */}
+            {passed ? (
+              <div className="bg-gradient-to-r from-emerald-100 to-green-100 p-5 rounded-2xl mb-6 text-center border-2 border-emerald-400 shadow-sm">
+                <p className="text-2xl font-black text-emerald-800 mb-1 flex items-center justify-center gap-2">
+                  <span>¡Nivel Aprobado con Éxito!</span>
+                  <PartyPopper className="w-7 h-7 text-emerald-600 inline-block" />
+                </p>
+                <p className="text-base font-bold text-emerald-700">
+                  ¡Has alcanzado el {accuracy}% de aciertos (mínimo requerido 70%)! El siguiente nivel ha quedado desbloqueado.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-gradient-to-r from-amber-50 to-red-50 p-5 rounded-2xl mb-6 text-center border-2 border-red-300 shadow-sm">
+                <p className="text-2xl font-black text-red-700 mb-1">
+                  Nivel no alcanzado ({accuracy}%)
+                </p>
+                <p className="text-base font-bold text-gray-700">
+                  Para desbloquear el siguiente nivel necesitas al menos un <strong>70% de aciertos</strong>.
+                  <br />
+                  ¡No te preocupes! Puedes reintentar este nivel para conseguirlo.
+                </p>
+              </div>
+            )}
 
             {/* MetaPoints Earned */}
             <div className="bg-gradient-to-r from-yellow-100 to-orange-100 p-6 rounded-2xl mb-6 text-center border-2 border-yellow-400">
@@ -428,12 +485,20 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
             )}
 
             {/* Action Buttons */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={resetPractice}
+                className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-amber-400 to-orange-500 hover:from-amber-500 hover:to-orange-600 text-white font-black text-lg flex items-center justify-center gap-2 shadow-lg"
+              >
+                <RotateCcw className="w-5 h-5" /> Reintentar Nivel
+              </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onBack}
-                className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black text-lg"
+                className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-black text-lg shadow-lg"
               >
                 Volver al Mapa
               </motion.button>
@@ -554,12 +619,12 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
                 repeat: isCorrect !== null ? 0 : Infinity,
                 ease: 'easeInOut'
               }}
-              className="mb-6"
+              className="mb-6 w-64 h-64 mx-auto flex items-center justify-center"
             >
-              <img 
-                src={dragonCharacter} 
-                alt="Draco" 
-                className="w-64 h-64 mx-auto"
+              <DracoAvatar 
+                className="w-full h-full object-contain filter drop-shadow-xl" 
+                alt="Draco"
+                showGlow={isCorrect === true}
               />
             </motion.div>
 
@@ -579,10 +644,20 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               key={currentProblem.question}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-3xl shadow-2xl p-8 mb-6"
+              className={`cuadro-pregunta rounded-3xl shadow-2xl p-8 mb-6 transition-all duration-300 ${
+                isCorrect === null
+                  ? 'bg-white border-2 border-indigo-100'
+                  : isCorrect
+                  ? 'correcto bg-emerald-500 border-4 border-emerald-600 text-white ring-4 ring-emerald-300/50'
+                  : 'incorrecto bg-red-500 border-4 border-red-600 text-white ring-4 ring-red-300/50'
+              }`}
             >
               <div className="text-center mb-8">
-                <h2 className="text-5xl font-bold text-gray-800 mb-2">
+                <h2
+                  className={`text-4xl sm:text-5xl font-bold mb-2 transition-colors duration-200 ${
+                    isCorrect === null ? 'text-gray-800' : 'text-white'
+                  }`}
+                >
                   {currentProblem.question}
                 </h2>
               </div>
