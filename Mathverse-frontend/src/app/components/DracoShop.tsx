@@ -290,7 +290,7 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
                     ) : (
                       <div className="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 font-black text-xs px-3 py-1 rounded-full border border-amber-200">
                         <Coins className="w-3.5 h-3.5 text-yellow-600" />
-                        <span>{outfit.cost} MP</span>
+                        <span>{outfit.cost.toLocaleString()} MP</span>
                       </div>
                     )}
                   </div>
@@ -336,14 +336,14 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
                           Precio
                         </span>
                         <span className="text-base sm:text-lg font-black text-gray-800">
-                          {outfit.cost === 0 ? "Gratis" : `${outfit.cost} MP`}
+                          {outfit.cost === 0 ? "Gratis" : `${outfit.cost.toLocaleString()} MP`}
                         </span>
                       </div>
                     </div>
 
                     {/* Botón Dinámico según Estado */}
                     {equipped ? (
-                      <div className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-2xl font-black text-sm shadow-md cursor-default">
+                      <div className="flex items-center justify-center gap-2 bg-emerald-500 text-white px-5 py-2.5 min-h-[44px] rounded-2xl font-black text-sm shadow-md cursor-default">
                         <Check className="w-5 h-5 stroke-[3]" />
                         <span>Equipado</span>
                       </div>
@@ -352,7 +352,7 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
                         onClick={() => handleEquip(outfit.id)}
-                        className="bg-gradient-to-r from-blue-500 via-indigo-600 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 py-2.5 rounded-2xl font-black text-sm shadow-lg flex items-center gap-2 cursor-pointer"
+                        className="bg-gradient-to-r from-blue-500 via-indigo-600 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white px-6 py-2.5 min-h-[44px] rounded-2xl font-black text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer"
                       >
                         <Sparkles className="w-4 h-4" />
                         <span>Equipar</span>
@@ -362,7 +362,7 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
                         whileHover={{ scale: canAfford ? 1.05 : 1 }}
                         whileTap={{ scale: canAfford ? 0.95 : 1 }}
                         onClick={() => handlePurchase(outfit)}
-                        className={`px-6 py-2.5 rounded-2xl font-black text-sm shadow-lg flex items-center gap-2 cursor-pointer transition-all ${
+                        className={`px-6 py-2.5 min-h-[44px] rounded-2xl font-black text-sm shadow-lg flex items-center justify-center gap-2 cursor-pointer transition-all ${
                           canAfford
                             ? "bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white hover:from-yellow-500 hover:to-red-600"
                             : "bg-gray-200 text-gray-500 border border-gray-300 cursor-not-allowed"
@@ -469,7 +469,7 @@ export function DracoShop({ isOpen, onClose }: DracoShopProps) {
                   <p className="text-sm text-gray-600 mt-2">
                     Necesitas{" "}
                     <span className="font-black text-red-500">
-                      {feedbackModal.missingPoints} MetaPoints más
+                      {feedbackModal.missingPoints?.toLocaleString()} MetaPoints más
                     </span>{" "}
                     para comprar este traje.
                   </p>

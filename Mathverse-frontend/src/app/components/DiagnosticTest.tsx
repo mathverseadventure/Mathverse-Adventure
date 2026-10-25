@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Trophy,
@@ -8,6 +8,8 @@ import {
   Pencil,
   Sparkles,
   Award,
+  Timer,
+  FastForward,
 } from "lucide-react";
 
 import dragonCharacter from "@/assets/images/draco.png";
@@ -55,6 +57,28 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
   const [questions, setQuestions] = useState<DiagnosticQuestion[]>([]);
   const [finalCorrect, setFinalCorrect] = useState(0);
   const [finalThemeStats, setFinalThemeStats] = useState<Record<string, { correct: number; total: number }>>({});
+  const [feedbackSecondsLeft, setFeedbackSecondsLeft] = useState<number>(5);
+
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSnapshotRef = useRef<{ nextCorrect: number; nextStats: Record<string, { correct: number; total: number }> } | null>(null);
+
+  const clearFeedbackTimers = () => {
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearFeedbackTimers();
+    };
+  }, []);
 
   useEffect(() => {
     generateDiagnosticQuestions();
@@ -274,25 +298,30 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
     setThemeStats(nextThemeStats);
     setCorrectAnswers(nextCorrect);
 
-    const transitionStart = performance.now();
+    // TEMPORIZADOR DE RETROALIMENTACIÓN DE 5 SEGUNDOS (5000 ms)
+    // Permite al alumno observar el feedback verde/rojo y explicación durante 5 segundos
+    const FEEDBACK_DURATION_MS = 5000;
+    clearFeedbackTimers();
+    setFeedbackSecondsLeft(5);
+    pendingSnapshotRef.current = { nextCorrect, nextStats: nextThemeStats };
 
-    // Transición rápida (380 ms): muestra el cuadro verde/rojo pero avanza de inmediato
-    setTimeout(() => {
+    countdownIntervalRef.current = setInterval(() => {
+      setFeedbackSecondsLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    transitionTimerRef.current = setTimeout(() => {
       goToNextQuestion(nextCorrect, nextThemeStats);
-      const elapsed = performance.now() - transitionStart;
-      console.log(
-        `%c[Performance] Diagnóstico: pregunta ${currentQuestion + 1} avanzada en ${elapsed.toFixed(
-          2
-        )} ms (Meta: <= 400 ms)`,
-        validation.isCorrect ? 'color: #10b981;' : 'color: #ef4444;'
-      );
-    }, 380);
+    }, FEEDBACK_DURATION_MS);
   };
 
   const goToNextQuestion = (
     currentCorrectCount: number,
     currentThemeStats: Record<string, { correct: number; total: number }>
   ) => {
+    clearFeedbackTimers();
+    setFeedbackSecondsLeft(5);
+    pendingSnapshotRef.current = null;
+
     if (currentQuestion < questions.length - 1) {
       setCurrentQuestion((prev) => prev + 1);
       setSelectedAnswer(null);
@@ -557,7 +586,7 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
                   type="button"
                   disabled={selectedAnswer !== null}
                   onClick={() => handleAnswer(opt)}
-                  className={`py-4 px-6 rounded-2xl font-black text-xl border-b-4 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 ${buttonStyles}`}
+                  className={`py-4 px-6 min-h-[52px] rounded-2xl font-black text-xl border-b-4 transition-all duration-200 transform active:scale-95 flex items-center justify-center gap-2 cursor-pointer ${buttonStyles}`}
                 >
                   {opt}
                 </button>
@@ -565,44 +594,72 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
             })}
           </div>
 
-          {/* FEEDBACK INMEDIATO AL RESPONDER */}
+          {/* FEEDBACK TEMPORIZADO DE 5 SEGUNDOS (5000 ms) */}
           <AnimatePresence>
             {isAnswerCorrect !== null && (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className={`mt-6 p-4 rounded-2xl flex items-center justify-between flex-wrap gap-2 ${
-                  isAnswerCorrect
-                    ? "bg-white/20 text-white border-2 border-white/40"
-                    : "bg-white/20 text-white border-2 border-white/40"
-                }`}
+                className="mt-6 p-4 sm:p-5 rounded-2xl bg-white/20 text-white border-2 border-white/40 shadow-lg flex flex-col gap-3"
               >
-                <div className="flex items-center gap-3">
-                  {isAnswerCorrect ? (
-                    <CheckCircle className="w-7 h-7 text-white fill-emerald-600 flex-shrink-0" />
-                  ) : (
-                    <XCircle className="w-7 h-7 text-white fill-red-600 flex-shrink-0" />
-                  )}
-                  <div>
-                    <p className="text-lg font-black text-white">
-                      {isAnswerCorrect
-                        ? "¡Correcto! ¡Excelente trabajo!"
-                        : `¡Incorrecto! La respuesta correcta era: ${q.correctAnswer}`}
-                    </p>
-                    <p className="text-xs sm:text-sm text-white/90 font-medium">
-                      {q.explanation}
-                    </p>
+                <div className="flex items-center justify-between flex-wrap gap-2">
+                  <div className="flex items-center gap-3">
+                    {isAnswerCorrect ? (
+                      <CheckCircle className="w-8 h-8 text-white fill-emerald-600 flex-shrink-0" />
+                    ) : (
+                      <XCircle className="w-8 h-8 text-white fill-red-600 flex-shrink-0" />
+                    )}
+                    <div>
+                      <p className="text-lg font-black text-white">
+                        {isAnswerCorrect
+                          ? "¡Correcto! ¡Excelente trabajo!"
+                          : `¡Incorrecto! La respuesta correcta era: ${q.correctAnswer}`}
+                      </p>
+                      <p className="text-xs sm:text-sm text-white/95 font-medium mt-0.5">
+                        {q.explanation}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Contador regresivo de 5 segundos + avance voluntario */}
+                  <div className="flex items-center gap-2 ml-auto">
+                    <div className="inline-flex items-center gap-1.5 bg-black/20 text-white px-3 py-1.5 rounded-full text-xs sm:text-sm font-black border border-white/30 shadow-inner">
+                      <Timer className="w-4 h-4 animate-spin" style={{ animationDuration: "3s" }} />
+                      <span>Siguiente en {feedbackSecondsLeft}s</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (pendingSnapshotRef.current) {
+                          goToNextQuestion(
+                            pendingSnapshotRef.current.nextCorrect,
+                            pendingSnapshotRef.current.nextStats
+                          );
+                        } else {
+                          goToNextQuestion(correctAnswers, themeStats);
+                        }
+                      }}
+                      className="bg-white text-indigo-900 px-3.5 py-1.5 rounded-full font-black text-xs sm:text-sm flex items-center gap-1 shadow hover:bg-white/90 active:scale-95 transition cursor-pointer min-h-[36px]"
+                      title="Avanzar de inmediato"
+                    >
+                      <span>Avanzar</span>
+                      <FastForward className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={() => goToNextQuestion(correctAnswers, themeStats)}
-                  className="bg-white text-indigo-900 px-4 py-2 rounded-xl font-black text-sm flex items-center gap-1.5 shadow hover:bg-white/90 transition ml-auto"
-                >
-                  Siguiente <ArrowRight className="w-4 h-4" />
-                </button>
+                {/* Barra de progreso visual que drena en 5 segundos */}
+                <div className="w-full h-2 bg-black/20 rounded-full overflow-hidden shadow-inner">
+                  <motion.div
+                    key={q.id}
+                    initial={{ width: "100%" }}
+                    animate={{ width: "0%" }}
+                    transition={{ duration: 5, ease: "linear" }}
+                    className={`h-full ${isAnswerCorrect ? "bg-emerald-400" : "bg-red-400"}`}
+                  />
+                </div>
               </motion.div>
             )}
           </AnimatePresence>

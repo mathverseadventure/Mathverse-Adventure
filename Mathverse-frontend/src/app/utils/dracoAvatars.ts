@@ -61,7 +61,7 @@ export const DRACO_OUTFITS: DracoOutfit[] = [
     subtitle: "Rumbo a la aventura",
     description:
       "¡Equipado con sombrero de safari, mochila, mapa, lupa y brújula dorada para explorar los misterios de las matemáticas!",
-    cost: 100,
+    cost: 500,
     icon: Compass,
     image: dracoExploradorPng,
     fallbackImage: "/assets/avatares/draco-explorador.png",
@@ -81,7 +81,7 @@ export const DRACO_OUTFITS: DracoOutfit[] = [
     subtitle: "Encantador de números",
     description:
       "¡Con sombrero azul estrellado, túnica mágica y báculo con gema resplandeciente para dominar hechizos numéricos!",
-    cost: 200,
+    cost: 1000,
     icon: Wand2,
     image: dracoMagoPng,
     fallbackImage: "/assets/avatares/draco-mago.png",
@@ -101,7 +101,7 @@ export const DRACO_OUTFITS: DracoOutfit[] = [
     subtitle: "Defensor del reino",
     description:
       "¡Armado con armadura reluciente, yelmo con visera, espada noble y escudo con el emblema del dragón para superar batallas duras!",
-    cost: 300,
+    cost: 2000,
     icon: Shield,
     image: dracoGuerreroPng,
     fallbackImage: "/assets/avatares/draco-guerrero.png",
@@ -121,7 +121,7 @@ export const DRACO_OUTFITS: DracoOutfit[] = [
     subtitle: "Poder arcano",
     description:
       "¡Envuelto en capucha mística violeta con el orbe de cristal cósmico para descifrar las fórmulas más legendarias!",
-    cost: 400,
+    cost: 3500,
     icon: Gem,
     image: dracoHechiceroPng,
     fallbackImage: "/assets/avatares/draco-hechicero.png",

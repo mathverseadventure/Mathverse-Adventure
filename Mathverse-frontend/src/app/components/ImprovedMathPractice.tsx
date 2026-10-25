@@ -1,6 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Heart, Trophy, ArrowLeft, Sparkles, Coins, Lightbulb, Pencil, RotateCcw, PartyPopper } from 'lucide-react';
+import {
+  Heart,
+  Trophy,
+  ArrowLeft,
+  Sparkles,
+  Coins,
+  Lightbulb,
+  Pencil,
+  RotateCcw,
+  PartyPopper,
+  CheckCircle2,
+  XCircle,
+  Timer,
+  FastForward,
+} from 'lucide-react';
 import dragonCharacter from "@/assets/images/draco.png";
 import { useUser } from '../utils/userContext';
 import { DrawingBoard } from './DrawingBoard';
@@ -45,9 +59,31 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
   const [showResults, setShowResults] = useState(false);
   const [showTiredDraco, setShowTiredDraco] = useState(false);
   const [showDrawingBoard, setShowDrawingBoard] = useState(false);
+  const [feedbackSecondsLeft, setFeedbackSecondsLeft] = useState<number>(5);
+
+  const transitionTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingAdvanceSnapshotRef = useRef<{ history: AttemptRecord[]; wasCorrect: boolean } | null>(null);
 
   const MAX_QUESTIONS = 10;
   const MAX_ERRORS = 5;
+
+  const clearFeedbackTimers = () => {
+    if (transitionTimerRef.current) {
+      clearTimeout(transitionTimerRef.current);
+      transitionTimerRef.current = null;
+    }
+    if (countdownIntervalRef.current) {
+      clearInterval(countdownIntervalRef.current);
+      countdownIntervalRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => {
+      clearFeedbackTimers();
+    };
+  }, []);
 
   const getDifficultyMultiplier = (level: number): number => {
     return 1 + (level - 1) * 0.5;
@@ -185,10 +221,38 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
     setCurrentProblem(generateProblem());
   }, [category, lessonLevel]);
 
+  const advanceToNext = (historySnapshot: AttemptRecord[], wasCorrect: boolean) => {
+    clearFeedbackTimers();
+    setSelectedAnswer(null);
+    setIsCorrect(null);
+    setShowConfetti(false);
+    setFeedbackSecondsLeft(5);
+    pendingAdvanceSnapshotRef.current = null;
+
+    const nuevasPreguntas = historySnapshot.length;
+    const nuevosErrores = historySnapshot.filter((a) => !a.isCorrect).length;
+    const nuevosCorazones = hearts - (!wasCorrect ? 1 : 0);
+
+    if (nuevosCorazones <= 0) {
+      updateHearts(0);
+      setShowTiredDraco(true);
+      return;
+    }
+
+    if (
+      nuevasPreguntas >= MAX_QUESTIONS ||
+      nuevosErrores >= MAX_ERRORS
+    ) {
+      finishPractice(historySnapshot);
+    } else {
+      setCurrentProblem(generateProblem());
+      setDragonMessage("¡Vamos! ¡Tú puedes!");
+    }
+  };
+
   const handleAnswer = async (answer: number) => {
     if (selectedAnswer !== null || !currentProblem) return;
 
-    const transitionStart = performance.now();
     setSelectedAnswer(answer);
     const correct = answer === currentProblem.correctAnswer;
     setIsCorrect(correct);
@@ -213,7 +277,6 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
       setShowConfetti(true);
 
       // Sincronización en segundo plano sin await (fire-and-forget)
-      // Evita retrasos de red que antes frenaban la transición de preguntas correctas
       updateMetaPoints(earnedPoints).catch((error) => {
         console.warn("[Performance] Error al guardar META Points en segundo plano:", error);
       });
@@ -238,43 +301,21 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
 
     setQuestionsAnswered((prev) => prev + 1);
 
-    // TRANSICIÓN RÁPIDA Y CONCURRENTE (350 ms)
-    // Permite que el niño perciba el cuadro verde/rojo pero avanza inmediatamente
-    const TRANSITION_DELAY_MS = 350;
+    // TEMPORIZADOR DE RETROALIMENTACIÓN DE 5 SEGUNDOS (5000 ms)
+    // Mantiene la pregunta y el feedback visible en pantalla exactamente 5 segundos
+    // con cuenta regresiva visual antes de avanzar automáticamente.
+    const FEEDBACK_DURATION_MS = 5000;
+    clearFeedbackTimers();
+    setFeedbackSecondsLeft(5);
+    pendingAdvanceSnapshotRef.current = { history: nextAttemptHistory, wasCorrect: correct };
 
-    setTimeout(() => {
-      setSelectedAnswer(null);
-      setIsCorrect(null);
-      setShowConfetti(false);
+    countdownIntervalRef.current = setInterval(() => {
+      setFeedbackSecondsLeft((prev) => Math.max(0, prev - 1));
+    }, 1000);
 
-      const nuevasPreguntas = nextAttemptHistory.length;
-      const nuevosErrores = nextAttemptHistory.filter((a) => !a.isCorrect).length;
-      const nuevosCorazones = hearts - (!correct ? 1 : 0);
-
-      const transitionElapsed = performance.now() - transitionStart;
-      console.log(
-        `%c[Performance] Transición de pregunta (${correct ? 'CORRECTA' : 'INCORRECTA'}) completada en ${transitionElapsed.toFixed(
-          2
-        )} ms (Meta: <= 400 ms)`,
-        correct ? 'color: #10b981; font-weight: bold;' : 'color: #ef4444; font-weight: bold;'
-      );
-
-      if (nuevosCorazones <= 0) {
-        updateHearts(0);
-        setShowTiredDraco(true);
-        return;
-      }
-
-      if (
-        nuevasPreguntas >= MAX_QUESTIONS ||
-        nuevosErrores >= MAX_ERRORS
-      ) {
-        finishPractice(nextAttemptHistory);
-      } else {
-        setCurrentProblem(generateProblem());
-        setDragonMessage("¡Vamos! ¡Tú puedes!");
-      }
-    }, TRANSITION_DELAY_MS);
+    transitionTimerRef.current = setTimeout(() => {
+      advanceToNext(nextAttemptHistory, correct);
+    }, FEEDBACK_DURATION_MS);
   };
 
   const finishPractice = (finalAttempts: AttemptRecord[] = attemptHistory) => {
@@ -297,6 +338,9 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
   };
 
   const resetPractice = () => {
+    clearFeedbackTimers();
+    setFeedbackSecondsLeft(5);
+    pendingAdvanceSnapshotRef.current = null;
     setSelectedAnswer(null);
     setIsCorrect(null);
     setMetaPoints(0);
@@ -311,34 +355,39 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
     setDragonMessage("¡Vamos! ¡Tú puedes!");
   };
 
+  const handleBack = () => {
+    clearFeedbackTimers();
+    onBack();
+  };
+
   if (!currentProblem || !user) return null;
 
   if (showTiredDraco) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center p-8">
+      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 flex items-center justify-center p-4 sm:p-8">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full text-center"
+          className="bg-white rounded-3xl shadow-2xl p-6 sm:p-8 max-w-lg w-full text-center"
         >
           <motion.div
             animate={{ y: [0, -8, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-40 h-40 mx-auto mb-6 flex items-center justify-center"
+            className="w-32 h-32 sm:w-40 sm:h-40 mx-auto mb-6 flex items-center justify-center"
           >
             <DracoAvatar
               className="w-full h-full object-contain filter drop-shadow-md"
               alt="Draco"
             />
           </motion.div>
-          <p className="text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
+          <p className="text-xl sm:text-2xl font-bold text-gray-800 mb-8 leading-relaxed">
             Estoy cansado, necesito recuperar mi energía, mañana seguiremos en la aventura, tú también descansa.
           </p>
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={onBack}
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black text-lg"
+            onClick={handleBack}
+            className="w-full py-4 min-h-[44px] rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black text-lg shadow-lg"
           >
             Volver
           </motion.button>
@@ -497,8 +546,8 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={onBack}
-                className="flex-1 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-black text-lg shadow-lg"
+                onClick={handleBack}
+                className="flex-1 py-4 min-h-[44px] rounded-2xl bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-black text-lg shadow-lg flex items-center justify-center"
               >
                 Volver al Mapa
               </motion.button>
@@ -546,50 +595,50 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
         )}
       </AnimatePresence>
 
-      {/* Header */}
-      <div className="bg-white shadow-md">
-        <div className="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+      {/* Header Responsive */}
+      <div className="bg-white/95 backdrop-blur-md shadow-md sticky top-0 z-30">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex flex-wrap items-center justify-between gap-2">
           <button
-            onClick={onBack}
-            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors"
+            onClick={handleBack}
+            className="flex items-center gap-2 px-3 sm:px-4 py-2 min-h-[44px] rounded-xl bg-gray-100 hover:bg-gray-200 transition-colors cursor-pointer text-gray-700 active:scale-95"
           >
-            <ArrowLeft className="w-5 h-5" />
-            <span className="font-semibold">Volver</span>
+            <ArrowLeft className="w-5 h-5 flex-shrink-0" />
+            <span className="font-bold text-sm sm:text-base">Volver</span>
           </button>
 
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowDrawingBoard((prev) => !prev)}
-              className={`flex items-center gap-2 px-4 py-2 rounded-xl transition-colors ${
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 min-h-[44px] rounded-xl transition-all cursor-pointer ${
                 showDrawingBoard
-                  ? 'bg-indigo-200 text-indigo-800'
-                  : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-700'
+                  ? 'bg-indigo-600 text-white shadow-md'
+                  : 'bg-indigo-100 hover:bg-indigo-200 text-indigo-800'
               }`}
             >
-              <Pencil className="w-5 h-5" />
-              <span className="font-bold">Tablero</span>
+              <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
+              <span className="font-black text-xs sm:text-sm">Pizarra</span>
             </button>
 
-            <div className="flex items-center gap-2 bg-yellow-100 px-4 py-2 rounded-xl">
-              <Coins className="w-5 h-5 text-yellow-600" />
-              <span className="font-bold text-yellow-700">{metaPoints}</span>
+            <div className="flex items-center gap-1.5 bg-yellow-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-yellow-300">
+              <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600" />
+              <span className="font-black text-xs sm:text-sm text-yellow-700">{metaPoints}</span>
             </div>
             
-            <div className="flex items-center gap-2 bg-orange-100 px-4 py-2 rounded-xl">
-              <Sparkles className="w-5 h-5 text-orange-500" />
-              <span className="font-bold text-orange-700">{streak} racha</span>
+            <div className="flex items-center gap-1.5 bg-orange-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-orange-300">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-orange-500" />
+              <span className="font-black text-xs sm:text-sm text-orange-700">{streak}</span>
             </div>
 
-            <div className="flex items-center gap-2 bg-red-100 px-4 py-2 rounded-xl">
-              <Heart className="w-5 h-5 text-red-500 fill-red-500" />
-              <span className="font-bold text-red-700">{hearts}</span>
+            <div className="flex items-center gap-1.5 bg-red-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-red-300">
+              <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-red-500 fill-red-500" />
+              <span className="font-black text-xs sm:text-sm text-red-700">{hearts}</span>
             </div>
           </div>
         </div>
 
         {/* Progress Bar */}
-        <div className="max-w-4xl mx-auto px-4 pb-4">
-          <div className="h-3 bg-gray-200 rounded-full overflow-hidden">
+        <div className="max-w-4xl mx-auto px-3 sm:px-4 pb-3">
+          <div className="h-2.5 sm:h-3 bg-gray-200 rounded-full overflow-hidden">
             <motion.div
               className="h-full bg-gradient-to-r from-green-400 to-emerald-500"
               initial={{ width: 0 }}
@@ -597,7 +646,7 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               transition={{ duration: 0.5 }}
             />
           </div>
-          <div className="flex justify-between text-sm text-gray-600 mt-1">
+          <div className="flex justify-between text-xs sm:text-sm text-gray-600 mt-1">
             <span>Pregunta {questionsAnswered + 1} de {MAX_QUESTIONS}</span>
             <span className="text-red-600 font-bold">Errores: {errors}/{MAX_ERRORS}</span>
           </div>
@@ -605,9 +654,9 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="grid md:grid-cols-2 gap-8 items-center">
-          {/* Dragon Section */}
+      <div className="max-w-4xl mx-auto px-3 sm:px-4 py-4 sm:py-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 items-center">
+          {/* Dragon Section - Escala para no desplazar las preguntas en celular */}
           <div className="text-center">
             <motion.div
               animate={{ 
@@ -619,7 +668,7 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
                 repeat: isCorrect !== null ? 0 : Infinity,
                 ease: 'easeInOut'
               }}
-              className="mb-6 w-64 h-64 mx-auto flex items-center justify-center"
+              className="mb-3 sm:mb-6 w-32 h-32 sm:w-48 sm:h-48 md:w-64 md:h-64 mx-auto flex items-center justify-center"
             >
               <DracoAvatar 
                 className="w-full h-full object-contain filter drop-shadow-xl" 
@@ -632,9 +681,9 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               key={dragonMessage}
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="bg-white rounded-2xl px-6 py-4 shadow-lg inline-block"
+              className="bg-white rounded-2xl px-4 sm:px-6 py-2.5 sm:py-3.5 shadow-lg inline-block border-2 border-indigo-100"
             >
-              <p className="text-2xl font-bold text-gray-800">{dragonMessage}</p>
+              <p className="text-lg sm:text-2xl font-black text-gray-800">{dragonMessage}</p>
             </motion.div>
           </div>
 
@@ -644,18 +693,18 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               key={currentProblem.question}
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className={`cuadro-pregunta rounded-3xl shadow-2xl p-8 mb-6 transition-all duration-300 ${
+              className={`cuadro-pregunta rounded-3xl shadow-2xl p-5 sm:p-8 mb-4 transition-all duration-300 ${
                 isCorrect === null
                   ? 'bg-white border-2 border-indigo-100'
                   : isCorrect
-                  ? 'correcto bg-emerald-500 border-4 border-emerald-600 text-white ring-4 ring-emerald-300/50'
-                  : 'incorrecto bg-red-500 border-4 border-red-600 text-white ring-4 ring-red-300/50'
+                  ? 'correcto bg-emerald-500 border-4 border-emerald-600 text-white ring-4 ring-emerald-300/50 shadow-emerald-200'
+                  : 'incorrecto bg-red-500 border-4 border-red-600 text-white ring-4 ring-red-300/50 shadow-red-200'
               }`}
             >
-              <div className="text-center mb-8">
+              <div className="text-center mb-6 sm:mb-8">
                 <h2
-                  className={`text-4xl sm:text-5xl font-bold mb-2 transition-colors duration-200 ${
-                    isCorrect === null ? 'text-gray-800' : 'text-white'
+                  className={`text-3xl sm:text-4xl md:text-5xl font-black mb-2 transition-colors duration-200 ${
+                    isCorrect === null ? 'text-gray-800' : 'text-white drop-shadow'
                   }`}
                 >
                   {currentProblem.question}
@@ -663,25 +712,25 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               </div>
 
               {/* Answer Options */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {currentProblem.options.map((option, index) => (
                   <motion.button
                     key={index}
                     onClick={() => handleAnswer(option)}
                     disabled={selectedAnswer !== null}
-                    whileHover={{ scale: selectedAnswer === null ? 1.05 : 1 }}
-                    whileTap={{ scale: selectedAnswer === null ? 0.95 : 1 }}
+                    whileHover={{ scale: selectedAnswer === null ? 1.03 : 1 }}
+                    whileTap={{ scale: selectedAnswer === null ? 0.96 : 1 }}
                     className={`
-                      py-6 px-8 rounded-2xl text-3xl font-bold transition-all
+                      min-h-[56px] py-4 sm:py-6 px-4 sm:px-6 rounded-2xl text-2xl sm:text-3xl font-black transition-all cursor-pointer flex items-center justify-center
                       ${selectedAnswer === null
-                        ? 'bg-gradient-to-br from-purple-400 to-pink-500 text-white hover:shadow-xl'
+                        ? 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white hover:shadow-xl active:scale-95'
                         : selectedAnswer === option
                           ? isCorrect
-                            ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white scale-105 shadow-xl'
-                            : 'bg-gradient-to-br from-red-400 to-red-500 text-white'
+                            ? 'bg-emerald-600 text-white scale-102 shadow-2xl ring-4 ring-white'
+                            : 'bg-red-600 text-white scale-102 shadow-2xl ring-4 ring-white'
                           : option === currentProblem.correctAnswer
-                            ? 'bg-gradient-to-br from-green-400 to-emerald-500 text-white'
-                            : 'bg-gray-200 text-gray-400'
+                            ? 'bg-emerald-500 text-white ring-4 ring-yellow-300'
+                            : 'bg-gray-200 text-gray-400 opacity-60'
                       }
                     `}
                   >
@@ -691,25 +740,86 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               </div>
             </motion.div>
 
-            {/* Feedback */}
+            {/* FEEDBACK TEMPORIZADO DE 5 SEGUNDOS (5000 ms) */}
             <AnimatePresence>
               {selectedAnswer !== null && (
                 <motion.div
                   initial={{ y: 20, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   exit={{ y: -20, opacity: 0 }}
-                  className={`text-center p-4 rounded-2xl ${
-                    isCorrect 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-red-100 text-red-700'
+                  className={`p-4 sm:p-5 rounded-3xl border-4 shadow-xl transition-all ${
+                    isCorrect
+                      ? 'bg-emerald-50 border-emerald-400 text-emerald-950 shadow-emerald-100'
+                      : 'bg-red-50 border-red-400 text-red-950 shadow-red-100'
                   }`}
                 >
-                  <p className="text-xl font-bold">
-                    {isCorrect 
-                      ? `¡Correcto! +${10 + (streak - 1) * 2} MetaPoints` 
-                      : `Incorrecto. La respuesta correcta es ${currentProblem.correctAnswer}`
-                    }
-                  </p>
+                  <div className="flex items-center justify-between gap-3 flex-wrap mb-2">
+                    <div className="flex items-center gap-2.5">
+                      {isCorrect ? (
+                        <CheckCircle2 className="w-7 h-7 sm:w-8 sm:h-8 text-emerald-600 flex-shrink-0" />
+                      ) : (
+                        <XCircle className="w-7 h-7 sm:w-8 sm:h-8 text-red-600 flex-shrink-0" />
+                      )}
+                      <div>
+                        <p className="text-base sm:text-lg font-black">
+                          {isCorrect
+                            ? `¡Correcto! +${10 + (streak - 1) * 2} MetaPoints`
+                            : '¡Respuesta incorrecta!'}
+                        </p>
+                        {!isCorrect && (
+                          <p className="text-xs sm:text-sm font-extrabold text-red-700">
+                            Respuesta correcta: <span className="underline">{currentProblem.correctAnswer}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Cuenta regresiva de 5 segundos + botón de avance voluntario */}
+                    <div className="flex items-center gap-2 ml-auto">
+                      <div className="inline-flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-full text-xs sm:text-sm font-black border border-gray-200 shadow-sm text-gray-800">
+                        <Timer className="w-4 h-4 text-indigo-600 animate-spin" style={{ animationDuration: '3s' }} />
+                        <span>Siguiente en {feedbackSecondsLeft}s</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (pendingAdvanceSnapshotRef.current) {
+                            advanceToNext(
+                              pendingAdvanceSnapshotRef.current.history,
+                              pendingAdvanceSnapshotRef.current.wasCorrect
+                            );
+                          }
+                        }}
+                        className="inline-flex items-center gap-1 bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-black px-3 py-1.5 rounded-full shadow transition-all active:scale-95 cursor-pointer min-h-[36px]"
+                        title="Avanzar de inmediato sin esperar los 5 segundos"
+                      >
+                        <span>Avanzar</span>
+                        <FastForward className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Barra animada de 5 segundos: drena suavemente del 100% al 0% */}
+                  <div className="w-full h-2.5 bg-gray-200 rounded-full overflow-hidden my-2 shadow-inner">
+                    <motion.div
+                      key={currentProblem.question}
+                      initial={{ width: '100%' }}
+                      animate={{ width: '0%' }}
+                      transition={{ duration: 5, ease: 'linear' }}
+                      className={`h-full ${isCorrect ? 'bg-emerald-500' : 'bg-red-500'}`}
+                    />
+                  </div>
+
+                  {/* Explicación didáctica */}
+                  <div className="mt-2 text-xs sm:text-sm bg-white/90 p-3 rounded-2xl border border-gray-200">
+                    <p className="flex items-center gap-1.5 font-black text-gray-800 mb-0.5">
+                      <Lightbulb className="w-4 h-4 text-amber-500 flex-shrink-0" />
+                      <span>Explicación didáctica:</span>
+                    </p>
+                    <p className="text-gray-700 leading-relaxed font-medium">
+                      {currentProblem.explanation}
+                    </p>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
