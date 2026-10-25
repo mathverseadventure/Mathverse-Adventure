@@ -98,3 +98,22 @@ export function isLessonUnlocked(
 
   return false;
 }
+
+/**
+ * Algoritmo de mezcla Fisher-Yates (Durstenfeld / Knuth):
+ * Reordena los elementos de un array de manera aleatoria y uniforme (probabilidad idéntica 1/n! para cada permutación).
+ * Retorna una copia nueva sin mutar el array original.
+ *
+ * Se aplica a nivel puramente visual para que las opciones aparezcan en posiciones variadas
+ * (arriba-izq, arriba-der, abajo-izq, abajo-der) mientras la validación lógica sigue evaluando
+ * por valor matemático real (answer === correctAnswer).
+ */
+export function shuffleArray<T>(array: T[]): T[] {
+  const result = [...array];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+

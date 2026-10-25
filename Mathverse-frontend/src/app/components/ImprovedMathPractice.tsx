@@ -18,7 +18,7 @@ import {
 import dragonCharacter from "@/assets/images/draco.png";
 import { useUser } from '../utils/userContext';
 import { DrawingBoard } from './DrawingBoard';
-import { PASSING_THRESHOLD, calculateStars } from '../utils/progressionService';
+import { PASSING_THRESHOLD, calculateStars, shuffleArray } from '../utils/progressionService';
 import { DracoAvatar } from './DracoAvatar';
 
 interface MathProblem {
@@ -212,9 +212,10 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
       }
     }
 
-    options.sort(() => Math.random() - 0.5);
+    // Mezcla aleatoria no sesgada con el algoritmo Fisher-Yates
+    const shuffledOptions = shuffleArray(options);
 
-    return { question, correctAnswer, options, explanation };
+    return { question, correctAnswer, options: shuffledOptions, explanation };
   };
 
   useEffect(() => {
@@ -616,7 +617,7 @@ export function ImprovedMathPractice({ category, lessonId, lessonLevel, onBack }
               }`}
             >
               <Pencil className="w-4 h-4 sm:w-5 sm:h-5" />
-              <span className="font-black text-xs sm:text-sm">Pizarra</span>
+              <span className="font-black text-xs sm:text-sm">Tablero</span>
             </button>
 
             <div className="flex items-center gap-1.5 bg-yellow-100 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl border border-yellow-300">

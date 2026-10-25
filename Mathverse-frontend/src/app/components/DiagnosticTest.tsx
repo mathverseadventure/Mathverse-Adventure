@@ -15,7 +15,7 @@ import {
 import dragonCharacter from "@/assets/images/draco.png";
 import { useUser, ThemeUnlocks } from "../utils/userContext";
 import { DrawingBoard } from "./DrawingBoard";
-import { validateAnswer, PASSING_THRESHOLD } from "../utils/progressionService";
+import { validateAnswer, PASSING_THRESHOLD, shuffleArray } from "../utils/progressionService";
 import { DracoAvatar } from "./DracoAvatar";
 
 interface DiagnosticTestProps {
@@ -264,13 +264,26 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
       },
     ];
 
-    setQuestions(diagnosticQuestions);
+    // =========================================================================
+    // ALEATORIZACIÓN VISUAL DE OPCIONES (ALGORITMO FISHER-YATES):
+    // Mezcla de manera uniforme las opciones para cada una de las preguntas,
+    // garantizando que la respuesta correcta pueda aparecer en cualquiera de las 4
+    // posiciones (arriba-izq, arriba-der, abajo-izq, abajo-der).
+    // La propiedad 'correctAnswer' y la evaluación en handleAnswer permanecen inalteradas,
+    // ya que la validación se hace por valor numérico real y no por posición en el array.
+    // =========================================================================
+    const randomizedQuestions: DiagnosticQuestion[] = diagnosticQuestions.map((q) => ({
+      ...q,
+      options: shuffleArray(q.options),
+    }));
+
+    setQuestions(randomizedQuestions);
 
     const initial: Record<string, { correct: number; total: number }> = {};
     THEMES.forEach((t) => {
       initial[t] = { correct: 0, total: 0 };
     });
-    diagnosticQuestions.forEach((q) => {
+    randomizedQuestions.forEach((q) => {
       if (!initial[q.category]) initial[q.category] = { correct: 0, total: 0 };
       initial[q.category].total += 1;
     });
@@ -503,10 +516,11 @@ export function DiagnosticTest({ onComplete }: DiagnosticTestProps) {
           <button
             type="button"
             onClick={() => setShowBoard((v) => !v)}
-            className="bg-white/95 hover:bg-white text-indigo-900 px-4 py-2 rounded-xl font-black flex items-center gap-2 shadow-lg transition"
+            className="bg-white/95 hover:bg-white text-indigo-900 px-3.5 sm:px-4 py-2 min-h-[44px] rounded-xl font-black flex items-center gap-2 shadow-lg transition active:scale-95 cursor-pointer"
+            title="Abrir Tablero para operaciones"
           >
             <Pencil className="w-4 h-4 text-indigo-600" />
-            <span className="hidden sm:inline">Pizarra / Tablero</span>
+            <span className="font-bold text-xs sm:text-sm">Tablero</span>
           </button>
         </div>
 

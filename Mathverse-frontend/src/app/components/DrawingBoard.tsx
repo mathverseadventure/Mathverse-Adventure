@@ -32,17 +32,28 @@ export function DrawingBoard({ className = "", height = 320 }: DrawingBoardProps
       if (!parent) return;
       const ratio = window.devicePixelRatio || 1;
       const width = parent.clientWidth;
-      canvas.width = width * ratio;
-      canvas.height = height * ratio;
+
+      // Dimensiones de píxeles reales del canvas
+      canvas.width = Math.floor(width * ratio);
+      canvas.height = Math.floor(height * ratio);
       canvas.style.width = `${width}px`;
       canvas.style.height = `${height}px`;
+
       const ctx = canvas.getContext("2d");
       if (ctx) {
+        // Limpiar completamente el canvas a nivel de búfer de píxeles
+        ctx.save();
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        ctx.restore();
+
+        // Aplicar transformación para pantallas retina/HiDPI
         ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
         ctx.lineCap = "round";
         ctx.lineJoin = "round";
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, width, height);
+        ctx.beginPath();
       }
     };
 
@@ -87,59 +98,108 @@ export function DrawingBoard({ className = "", height = 320 }: DrawingBoardProps
     setIsDrawing(false);
   };
 
+  /**
+   * Limpieza total y segura del Tablero (Canvas):
+   * 1. Resetea la matriz de transformación a escala 1:1 para abarcar todas las dimensiones reales (canvas.width, canvas.height).
+   * 2. Ejecuta clearRect() en todo el canvas para eliminar los píxeles dibujados.
+   * 3. Rellena con fondo blanco limpio.
+   * 4. Llama a ctx.beginPath() para reiniciar los trazos y prevenir "fantasmas" o conexiones indeseadas con dibujos anteriores.
+   */
   const clearCanvas = () => {
     const canvas = canvasRef.current;
-    const ctx = canvas?.getContext("2d");
-    if (!canvas || !ctx) return;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    // 1. Resetear cualquier trazo activo
+    ctx.beginPath();
+
+    // 2. Guardar el estado de contexto actual
+    ctx.save();
+
+    // 3. Resetear transformación a escala 1:1 absoluta
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+
+    // 4. Limpiar completamente todos los píxeles del canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // 5. Rellenar de blanco uniforme
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // 6. Restaurar la transformación escalada previa (devicePixelRatio)
+    ctx.restore();
+
+    // 7. Reiniciar trazo vacío para evitar que se redibujen trazos anteriores
+    ctx.beginPath();
+    setIsDrawing(false);
   };
 
   return (
-    <div className={`bg-white rounded-2xl border-2 border-indigo-200 p-3 ${className}`}>
+    <div className={`bg-white rounded-2xl border-2 border-indigo-200 p-3 sm:p-4 shadow-sm ${className}`}>
+      {/* Barra de herramientas del Tablero */}
       <div className="flex flex-wrap items-center gap-2 mb-3">
+        {/* Botón Lápiz (min 44x44px) */}
         <button
           type="button"
           onClick={() => setTool("pen")}
-          className={`p-2 rounded-xl border-2 ${tool === "pen" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"}`}
-          title="Lápiz"
+          className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl border-2 flex items-center justify-center transition-all cursor-pointer ${
+            tool === "pen"
+              ? "border-indigo-600 bg-indigo-100 text-indigo-700 shadow-sm"
+              : "border-gray-200 text-gray-600 hover:bg-gray-100"
+          }`}
+          title="Lápiz de dibujo"
         >
           <Pencil className="w-5 h-5" />
         </button>
+
+        {/* Botón Borrador (min 44x44px) */}
         <button
           type="button"
           onClick={() => setTool("eraser")}
-          className={`p-2 rounded-xl border-2 ${tool === "eraser" ? "border-indigo-500 bg-indigo-50" : "border-gray-200"}`}
-          title="Borrador"
+          className={`w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl border-2 flex items-center justify-center transition-all cursor-pointer ${
+            tool === "eraser"
+              ? "border-indigo-600 bg-indigo-100 text-indigo-700 shadow-sm"
+              : "border-gray-200 text-gray-600 hover:bg-gray-100"
+          }`}
+          title="Borrador suave"
         >
           <Eraser className="w-5 h-5" />
         </button>
+
+        {/* Botón Caneca: Limpiar Tablero Completo (min 44x44px) */}
         <button
           type="button"
           onClick={clearCanvas}
-          className="p-2 rounded-xl border-2 border-gray-200"
-          title="Limpiar"
+          className="w-11 h-11 min-w-[44px] min-h-[44px] rounded-xl border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-400 active:scale-95 flex items-center justify-center transition-all cursor-pointer shadow-sm"
+          title="Limpiar Tablero por completo"
         >
           <Trash2 className="w-5 h-5" />
         </button>
-        <div className="flex items-center gap-1 ml-2">
+
+        {/* Control de grosor del trazo */}
+        <div className="flex items-center gap-1 bg-gray-50 p-1 rounded-xl border border-gray-200 ml-1">
           <button
             type="button"
             onClick={() => setLineWidth((w) => Math.max(2, w - 1))}
-            className="p-1 rounded-lg border border-gray-200"
+            className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 active:scale-95 cursor-pointer"
+            title="Reducir grosor"
           >
             <Minus className="w-4 h-4" />
           </button>
-          <span className="text-xs font-bold w-8 text-center">{lineWidth}px</span>
+          <span className="text-xs font-black w-8 text-center text-gray-700">{lineWidth}px</span>
           <button
             type="button"
             onClick={() => setLineWidth((w) => Math.min(20, w + 1))}
-            className="p-1 rounded-lg border border-gray-200"
+            className="w-8 h-8 min-w-[32px] min-h-[32px] rounded-lg border border-gray-200 bg-white flex items-center justify-center text-gray-700 hover:bg-gray-100 active:scale-95 cursor-pointer"
+            title="Aumentar grosor"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
-        <div className="flex gap-1 ml-auto">
+
+        {/* Paleta de colores táctil */}
+        <div className="flex items-center gap-1.5 ml-auto flex-wrap">
           {COLORS.map((c) => (
             <button
               key={c}
@@ -148,17 +208,23 @@ export function DrawingBoard({ className = "", height = 320 }: DrawingBoardProps
                 setColor(c);
                 setTool("pen");
               }}
-              className={`w-7 h-7 rounded-full border-2 ${color === c && tool === "pen" ? "border-gray-800 scale-110" : "border-white"}`}
+              className={`w-8 h-8 sm:w-9 sm:h-9 min-w-[32px] min-h-[32px] rounded-full border-2 transition-transform cursor-pointer ${
+                color === c && tool === "pen"
+                  ? "border-indigo-600 scale-110 shadow-md ring-2 ring-indigo-300"
+                  : "border-white hover:scale-105"
+              }`}
               style={{ backgroundColor: c }}
-              title="Color"
+              title={`Color ${c}`}
             />
           ))}
         </div>
       </div>
-      <div className="w-full touch-none">
+
+      {/* Área del lienzo interactivo */}
+      <div className="w-full touch-none relative rounded-xl overflow-hidden border-2 border-indigo-100">
         <canvas
           ref={canvasRef}
-          className="w-full rounded-xl border border-gray-200 cursor-crosshair bg-white"
+          className="w-full cursor-crosshair bg-white block"
           style={{ height }}
           onMouseDown={startDraw}
           onMouseMove={draw}

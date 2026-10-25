@@ -3,6 +3,35 @@
 @import './theme.css';
 
 /* ==========================================================================
+   REGLAS GLOBALES DE RESPONSIVE DESIGN (MÓVIL, TABLET Y ESCRITORIO)
+   ========================================================================== */
+html, body {
+  overflow-x: hidden;
+  width: 100%;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Optimización táctil para dispositivos móviles (mínimo 44x44px en botones interactivos) */
+button, a, input, select {
+  touch-action: manipulation;
+}
+
+/* ==========================================================================
+   BREAKPOINTS EXPLICADOS:
+   - Móvil compacto: < 640px (por defecto en Tailwind)
+   - Móvil horizontal / Tablet: sm: (≥ 640px)
+   - Tablet horizontal / Laptop: md: (≥ 768px)
+   - Pantallas de escritorio: lg: (≥ 1024px) y xl: (≥ 1280px)
+   - Celulares en modo horizontal (altura reducida ≤ 500px):
+   ========================================================================== */
+@media screen and (max-height: 500px) and (orientation: landscape) {
+  /* Evitar que elementos flotantes tapen el centro en horizontal */
+  .fixed.bottom-3, .fixed.bottom-6 {
+    bottom: 0.5rem !important;
+  }
+}
+
+/* ==========================================================================
    FEEDBACK VISUAL: ESTADOS PARA CUADROS DE PREGUNTAS (DIAGNÓSTICO Y PRÁCTICA)
    ========================================================================== */
 .cuadro-pregunta {
@@ -44,4 +73,3 @@
 .cuadro-pregunta.incorrecto label {
   color: #ffffff !important;
 }
-
